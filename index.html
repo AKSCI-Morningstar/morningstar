@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AKSCI — The Morningstar Solution</title>
+<meta name="description" content="Map your entire aerospace supplier network, simulate disruptions, and generate audit-ready compliance docs — in one platform.">
+<meta property="og:title" content="AKSCI — The Morningstar Solution">
+<meta property="og:description" content="Supplier network mapping, disruption simulation, and audit-ready compliance for aerospace.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0A0F1C;
+    --bg2: #0D1525;
+    --bg3: #111827;
+    --bg4: #172035;
+    --surface: #141B2D;
+    --surface-h: #1C2640;
+    --border: rgba(255,255,255,0.04);
+    --border-l: rgba(255,255,255,0.08);
+    --text: #E8ECF1;
+    --text2: #94A8C4;
+    --text3: #4A5A72;
+    --cyan: #00B8D9;
+    --cyan2: #33D1EE;
+    --cyan-dim: rgba(0,184,217,0.08);
+    --cyan-glow: rgba(0,184,217,0.2);
+    --red: #E53E3E;
+    --red-dim: rgba(229,62,62,0.12);
+    --amber: #D69E2E;
+    --green: #48BB78;
+    --purple: #9F7AEA;
+    --font-h: 'Syne', sans-serif;
+    --font-b: 'DM Sans', sans-serif;
+    --font-m: 'DM Mono', monospace;
+    --max-w: 1160px;
+    --header-h: 72px;
+    --radius: 12px;
+    --r-sm: 6px;
+    --ease: cubic-bezier(0.19,1,0.22,1);
+}
+html{scroll-behavior:smooth}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--cyan);text-decoration:none;transition:color 0.2s}
+a:hover{color:var(--cyan2)}
+img{display:block;max-width:100%}
+::selection{background:var(--cyan);color:#0A0F1C}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+/* INTRO */
+#intro{position:fixed;inset:0;z-index:9999;background:#05080F;display:flex;align-items:center;justify-content:center;transition:opacity 0.7s ease}
+#intro.fade{opacity:0;pointer-events:none}
+.iw{text-align:center}
+.iw .tw{display:inline-flex;align-items:baseline;gap:3px}
+#ty{font-family:var(--font-m);font-size:clamp(1.1rem,3.5vw,2rem);color:var(--cyan);text-shadow:0 0 16px rgba(0,184,217,0.15),0 0 48px rgba(0,184,217,0.06);letter-spacing:0.06em}
+.cu{display:inline-block;width:2px;height:1.3em;background:var(--cyan);margin-left:3px;vertical-align:text-bottom;animation:bl 0.7s step-end infinite;box-shadow:0 0 8px var(--cyan)}
+.cu.h{opacity:0}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+#by{font-family:var(--font-m);font-size:0.7rem;color:var(--text2);opacity:0;transition:opacity 0.6s;margin-top:14px}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--header-h);display:flex;align-items:center;background:rgba(10,15,28,0.4);backdrop-filter:blur(8px);transition:background 0.35s,backdrop-filter 0.35s,box-shadow 0.35s,transform 0.35s}
+header.scrolled{background:rgba(10,15,28,0.92);backdrop-filter:blur(14px);box-shadow:0 4px 32px rgba(0,0,0,0.25);border-bottom:1px solid rgba(255,255,255,0.04)}
+header.hidden{transform:translateY(-100%)}
+.hi{max-width:var(--max-w);margin:0 auto;padding:0 28px;width:100%;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.logo-img{height:36px;width:auto;filter:drop-shadow(0 0 12px rgba(0,184,217,0.12))}
+.logo-txt{font-family:var(--font-h);font-weight:700;font-size:1rem;color:var(--text);letter-spacing:0.02em}
+.logo-txt span{color:var(--cyan)}
+.h-nav{display:flex;align-items:center;gap:6px}
+.h-nav a{font-size:0.75rem;color:var(--text2);padding:8px 14px;border-radius:var(--r-sm);transition:all 0.2s;font-family:var(--font-m);letter-spacing:0.03em}
+.h-nav a:hover{color:var(--text);background:rgba(255,255,255,0.03)}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:var(--r-sm);background:rgba(0,184,217,0.08);color:var(--cyan);font-family:var(--font-h);font-weight:700;font-size:0.78rem;border:1.5px solid rgba(0,184,217,0.3);cursor:pointer;transition:all 0.25s;text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;box-shadow:0 0 12px rgba(0,184,217,0.06)}
+.btn-ghost:hover{background:rgba(0,184,217,0.15);border-color:var(--cyan);box-shadow:0 0 24px var(--cyan-glow),0 0 48px rgba(0,184,217,0.08);transform:translateY(-1px)}
+.btn-ghost svg{width:14px;height:14px;flex-shrink:0}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 28px 100px;position:relative;overflow:hidden;background:radial-gradient(ellipse 60% 30% at 50% -10%,rgba(0,184,217,0.05) 0%,transparent 60%),radial-gradient(ellipse 40% 30% at 80% 90%,rgba(0,184,217,0.02) 0%,transparent 50%),linear-gradient(180deg,#0A0F1C 0%,#0C1322 50%,#0A0F1C 100%)}
+#hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,184,217,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,184,217,0.02) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;will-change:background-position}
+.hc{position:relative;z-index:1;max-width:880px}
+.hc .ht{font-family:var(--font-m);font-size:0.7rem;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;padding:5px 14px;border:1px solid rgba(255,255,255,0.06);border-radius:100px;display:inline-block;margin-bottom:16px}
+.hc h1{font-family:var(--font-h);font-weight:800;font-size:clamp(2rem,5.5vw,4rem);line-height:1.08;margin-bottom:16px;letter-spacing:-0.01em}
+.hc h1 .brand{background:linear-gradient(135deg,var(--cyan) 0%,var(--cyan2) 50%,var(--cyan) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 30px rgba(0,184,217,0.2));display:inline-block}
+.hc h1 .sub{display:block;color:var(--text);font-weight:600;letter-spacing:0.04em;margin-top:4px}
+.hc p{font-size:clamp(0.95rem,1.6vw,1.15rem);color:var(--text2);max-width:720px;margin:0 auto 28px;line-height:1.75}
+.ha{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.btn-p{display:inline-flex;align-items:center;gap:10px;padding:16px 36px;border-radius:var(--r-sm);background:rgba(0,184,217,0.08);color:var(--cyan);font-family:var(--font-h);font-weight:700;font-size:0.9rem;border:1.5px solid var(--cyan);cursor:pointer;transition:all 0.25s;text-transform:uppercase;letter-spacing:0.1em;box-shadow:0 0 20px var(--cyan-glow),inset 0 0 20px rgba(0,184,217,0.03);backdrop-filter:blur(4px);animation:pg 2.8s ease-in-out infinite}
+.btn-p:hover{background:rgba(0,184,217,0.15);border-color:var(--cyan2);color:var(--cyan2);box-shadow:0 0 40px var(--cyan-glow),0 0 80px rgba(0,184,217,0.12);transform:translateY(-2px)}
+.btn-p:active{transform:translateY(0) scale(0.97);box-shadow:0 0 8px var(--cyan-glow);background:rgba(0,184,217,0.12)}
+@keyframes pg{0%,100%{box-shadow:0 0 20px var(--cyan-glow),0 0 40px rgba(0,184,217,0.06),inset 0 0 20px rgba(0,184,217,0.03)}50%{box-shadow:0 0 36px var(--cyan-glow),0 0 72px rgba(0,184,217,0.12),inset 0 0 28px rgba(0,184,217,0.05)}}
+.btn-s{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:var(--r-sm);background:transparent;color:var(--cyan);font-family:var(--font-h);font-weight:600;font-size:0.85rem;border:1.5px solid rgba(0,184,217,0.35);cursor:pointer;transition:all 0.25s;text-transform:uppercase;letter-spacing:0.08em}
+.btn-s:hover{background:rgba(0,184,217,0.06);border-color:var(--cyan);box-shadow:0 0 24px rgba(0,184,217,0.1);transform:translateY(-2px)}
+.btn-s:active{transform:translateY(0) scale(0.97)}
+.btn-s svg{width:15px;height:15px;flex-shrink:0}
+.ha-alt{text-align:center;margin-top:20px;width:100%}
+.alt-link{font-family:var(--font-m);font-size:0.75rem;color:var(--text2);letter-spacing:0.06em;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:2px;transition:all 0.2s}
+.alt-link:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* QUOTE */
+#quote{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:60px 28px}
+.qi{max-width:800px;margin:0 auto;text-align:center}
+.qi blockquote{font-size:clamp(0.95rem,1.8vw,1.2rem);color:var(--text2);line-height:1.8;font-style:italic}
+.qi blockquote strong{color:var(--text);font-style:normal}
+.qi cite{display:block;margin-top:16px;font-family:var(--font-m);font-size:0.7rem;color:var(--text3);letter-spacing:0.04em;font-style:normal}
+
+/* SECTION */
+section{padding:110px 28px}
+.si{max-width:var(--max-w);margin:0 auto}
+.st{font-family:var(--font-h);font-weight:700;font-size:clamp(1.5rem,3.2vw,2.2rem);line-height:1.15;text-align:center;margin-bottom:12px;letter-spacing:-0.005em}
+.ss{text-align:center;color:var(--text2);font-size:1.05rem;max-width:680px;margin:0 auto 50px;line-height:1.7}
+
+/* FEATURES GRID */
+#features{background:var(--bg)}
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:960px){.fg{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.fg{grid-template-columns:1fr}}
+.fc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 26px;transition:all 0.35s;position:relative;overflow:hidden}
+.fc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity 0.35s}
+.fc:hover::before{opacity:1}
+.fc:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.3);border-color:rgba(0,184,217,0.08)}
+.fc .ic{width:44px;height:44px;border-radius:10px;background:var(--cyan-dim);display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--cyan)}
+.fc .ic svg{width:22px;height:22px}
+.fc h3{font-family:var(--font-h);font-weight:600;font-size:0.95rem;margin-bottom:8px}
+.fc .fd{color:var(--text2);font-size:0.85rem;line-height:1.7;margin-bottom:10px}
+.fc .ftg{font-family:var(--font-m);font-size:0.6rem;color:var(--cyan);letter-spacing:0.05em;text-transform:uppercase;display:block;margin-top:4px;opacity:0.7}
+
+/* FEATURE DEEP DIVES */
+#deep-dives{background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%)}
+.dd-grid{display:flex;flex-direction:column;gap:80px}
+.dd{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+@media(max-width:860px){.dd{grid-template-columns:1fr;gap:36px}.dd-img{order:-1}}
+.dd-txt h2{font-family:var(--font-h);font-weight:700;font-size:clamp(1.3rem,2.8vw,1.8rem);margin-bottom:16px;line-height:1.2}
+.dd-txt h2 .hl{color:var(--cyan)}
+.dd-txt p{color:var(--text2);font-size:0.95rem;line-height:1.8;margin-bottom:12px}
+.dd-txt strong{color:var(--cyan);font-weight:500}
+.dd-txt ul{list-style:none;padding:0;margin:8px 0 16px}
+.dd-txt ul li{padding:6px 0 6px 20px;position:relative;color:var(--text2);font-size:0.9rem;line-height:1.6}
+.dd-txt ul li::before{content:'→';position:absolute;left:0;color:var(--cyan);font-weight:700}
+.dd-stat{font-family:var(--font-m);font-size:0.65rem;color:var(--green);padding:4px 0}
+.dd-call{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:10px 16px;border-radius:var(--r-sm);background:var(--cyan-dim);border:1px solid rgba(0,184,217,0.15);font-size:0.82rem;color:var(--text);line-height:1.5}
+.dd-call .dd-tag{font-family:var(--font-m);font-size:0.55rem;color:var(--cyan);letter-spacing:0.06em;text-transform:uppercase}
+
+/* DD MOCKUPS */
+.dd-img{background:#0A0F1C;border:1px solid rgba(0,184,217,0.1);border-radius:var(--radius);padding:24px;font-family:var(--font-m);font-size:0.75rem;box-shadow:0 20px 60px rgba(0,0,0,0.4),inset 0 0 60px rgba(0,184,217,0.015);overflow-x:auto}
+.dd-img .md{display:flex;gap:7px;margin-bottom:16px}
+.dd-img .mdot{width:9px;height:9px;border-radius:50%}
+.dd-img .mdot.r{background:#FF5F57}
+.dd-img .mdot.y{background:#FFBD2E}
+.dd-img .mdot.g{background:#28C840}
+.dd-img .mh{color:var(--cyan);font-weight:500;letter-spacing:0.05em;margin-bottom:18px;text-transform:uppercase;font-size:0.65rem;opacity:0.8}
+.dd-img .clock-display{text-align:center;padding:16px 0;margin-bottom:12px;border-bottom:1px solid var(--border)}
+.dd-img .clock-num{font-family:var(--font-h);font-weight:800;font-size:2.8rem;color:var(--red);text-shadow:0 0 20px rgba(229,62,62,0.3)}
+.dd-img .clock-label{font-family:var(--font-m);font-size:0.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em}
+.dd-img .clock-sub{font-size:0.65rem;color:var(--text2);margin-top:4px}
+.dd-row{display:grid;grid-template-columns:1.2fr 0.8fr 0.7fr 1.3fr;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center}
+.dd-row:last-child{border-bottom:none}
+.dd-row .dc{color:var(--text2);font-size:0.72rem}
+.dd-bar{height:8px;border-radius:4px;background:rgba(255,255,255,0.05);overflow:hidden}
+.dd-bar .df{height:100%;border-radius:4px}
+.df.good{background:var(--green)}.df.warn{background:var(--amber)}.df.crit{background:var(--red)}.df.cyan{background:var(--cyan)}
+.dd-sum{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:0.65rem}
+.dd-al{color:var(--red);display:flex;align-items:center;gap:6px}
+.dd-ok{color:var(--green);display:flex;align-items:center;gap:6px}
+.dd-graph{width:100%;height:120px;position:relative;margin:12px 0}
+.dd-graph svg{width:100%;height:100%}
+
+/* PLATFORM BRIEF */
+#platform-brief{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.pb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:800px){.pb-grid{grid-template-columns:1fr}}
+.pb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;transition:all 0.3s}
+.pb-card:hover{border-color:rgba(0,184,217,0.12);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+.pb-card .pb-num{font-family:var(--font-h);font-weight:800;font-size:1.8rem;color:var(--cyan);margin-bottom:6px;line-height:1}
+.pb-card .pb-lbl{font-family:var(--font-m);font-size:0.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+.pb-card .pb-desc{font-size:0.82rem;color:var(--text2);line-height:1.7}
+
+/* WHO */
+#who-for{background:linear-gradient(180deg,var(--surface) 0%,var(--bg) 100%)}
+.wg{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+@media(max-width:800px){.wg{grid-template-columns:1fr;max-width:480px;margin:0 auto}}
+.wc{background:rgba(20,27,45,0.55);border:1px solid var(--border);border-radius:var(--radius);padding:36px 30px;transition:all 0.35s}
+.wc:hover{border-color:rgba(0,184,217,0.12);background:rgba(20,27,45,0.8);transform:translateY(-4px);box-shadow:0 14px 44px rgba(0,0,0,0.35)}
+.wc .ic{width:40px;height:40px;border-radius:8px;background:var(--cyan-dim);display:flex;align-items:center;justify-content:center;margin-bottom:20px;color:var(--cyan)}
+.wc .ic svg{width:20px;height:20px}
+.wc .who{font-family:var(--font-m);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--cyan);margin-bottom:6px;display:block}
+.wc h3{font-family:var(--font-h);font-weight:600;font-size:1rem;margin-bottom:10px}
+.wc p{color:var(--text2);font-size:0.9rem;line-height:1.7}
+
+/* INTEGRATION ROW */
+#integration{background:var(--bg);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ir{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-bottom:28px}
+.ib{padding:8px 20px;border-radius:100px;background:var(--surface);border:1px solid var(--border);color:var(--text2);font-size:0.78rem;font-weight:500;transition:all 0.25s;font-family:var(--font-m);letter-spacing:0.02em;text-transform:uppercase}
+.ib:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.ir-txt{text-align:center;max-width:640px;margin:0 auto;color:var(--text2);font-size:0.92rem;line-height:1.7}
+
+/* FOOTER */
+footer{padding:64px 28px 40px;background:#060913}
+.fc{text-align:center;max-width:640px;margin:0 auto 48px}
+.fc h3{font-family:var(--font-h);font-weight:700;font-size:1.4rem;margin-bottom:12px}
+.fc p{color:var(--text2);font-size:0.95rem;margin-bottom:24px;line-height:1.6}
+.fi{max-width:var(--max-w);margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid var(--border);padding-top:32px}
+@media(max-width:640px){.fi{flex-direction:column;text-align:center;gap:16px}}
+.fb{display:flex;align-items:center;gap:12px}
+.fb img{height:26px;width:auto}
+.fbt{display:flex;flex-direction:column;gap:2px}
+.fbn{font-family:var(--font-h);font-weight:500;font-size:0.85rem;color:var(--text2);letter-spacing:0.02em}
+.fbtg{font-family:var(--font-m);font-size:0.6rem;color:rgba(255,255,255,0.08);letter-spacing:0.08em;text-transform:uppercase}
+.fnav{display:flex;align-items:center;gap:24px}
+.fnav a{color:var(--text2);font-size:0.82rem;transition:color 0.2s}
+.fnav a:hover{color:var(--cyan)}
+.fnav .sep{color:rgba(255,255,255,0.06);font-size:0.75rem}
+.fcopy{color:rgba(255,255,255,0.15);font-size:0.78rem}
+
+/* SCROLL REVEAL */
+.fu{opacity:0;transform:translateY(28px);transition:opacity 0.6s var(--ease),transform 0.6s var(--ease)}
+.fu.v{opacity:1;transform:translateY(0)}
+.fu.st1{transition-delay:0s}.fu.st2{transition-delay:0.08s}.fu.st3{transition-delay:0.16s}.fu.st4{transition-delay:0.24s}.fu.st5{transition-delay:0.32s}.fu.st6{transition-delay:0.4s}.fu.st7{transition-delay:0.48s}
+
+/* PROGRESS */
+#pb{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--cyan2));z-index:10000;width:0%;transition:width 0.08s linear;box-shadow:0 0 8px var(--cyan-glow)}
+section[id]{scroll-margin-top:calc(var(--header-h) + 16px)}
+
+/* REGULATORY MOCKUP */
+.reg-table{width:100%;font-size:0.72rem;border-collapse:collapse}
+.reg-table th{text-align:left;padding:8px 6px;color:var(--text3);font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border);font-weight:500}
+.reg-table td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text2)}
+.reg-table .stat{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:0.6rem;font-family:var(--font-m)}
+.reg-table .stat.ok{background:rgba(72,187,120,0.1);color:var(--green);border:1px solid rgba(72,187,120,0.15)}
+.reg-table .stat.warn{background:rgba(214,158,46,0.1);color:var(--amber);border:1px solid rgba(214,158,46,0.15)}
+.reg-table .stat.crit{background:rgba(229,62,62,0.1);color:var(--red);border:1px solid rgba(229,62,62,0.15)}
+.reg-alert{display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(229,62,62,0.06);border:1px solid rgba(229,62,62,0.12);border-radius:var(--r-sm);margin-top:10px;font-size:0.65rem;color:var(--red)}
+
+/* RECOVERY MOCKUP */
+.rec-path{padding:8px 12px;border-radius:var(--r-sm);margin:6px 0;font-size:0.72rem;display:flex;justify-content:space-between;align-items:center}
+.rec-path.prime{background:rgba(0,184,217,0.06);border:1px solid rgba(0,184,217,0.12)}
+.rec-path.alt{background:rgba(72,187,120,0.06);border:1px solid rgba(72,187,120,0.12)}
+.rec-path.risk{background:rgba(229,62,62,0.06);border:1px solid rgba(229,62,62,0.12)}
+.rec-path .rp-label{display:flex;align-items:center;gap:6px;color:var(--text)}
+.rec-path .rp-stat{font-family:var(--font-m);font-size:0.6rem;color:var(--text3)}
+
+/* NETWORK MOCKUP */
+.net-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.net-node{padding:10px;border-radius:var(--r-sm);text-align:center;font-size:0.6rem;border:1px solid var(--border);background:rgba(255,255,255,0.02)}
+.net-node.t1{border-color:rgba(0,184,217,0.2);background:rgba(0,184,217,0.04)}
+.net-node.t2{border-color:rgba(72,187,120,0.15);background:rgba(72,187,120,0.03)}
+.net-node.t3{border-color:rgba(214,158,46,0.12);background:rgba(214,158,46,0.03)}
+.net-node .nn-label{color:var(--text);font-weight:500}
+.net-node .nn-sub{color:var(--text3);font-size:0.5rem;margin-top:2px}
+.net-line{display:flex;align-items:center;justify-content:center;gap:4px;color:var(--text3);font-size:0.55rem;padding:2px 0}
+</style>
+</head>
+<body>
+
+<div id="pb"></div>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="iw">
+    <div class="tw">
+      <span id="ty"></span>
+      <span class="cu" id="cu"></span>
+    </div>
+    <div id="by">by AKSCI</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main" style="display:none">
+
+<!-- HEADER -->
+<header id="hdr">
+  <div class="hi">
+    <a href="#" class="logo" aria-label="AKSCI home">
+      <img src="logo.png" alt="AKSCI" class="logo-img">
+      <span class="logo-txt">AK<span>SCI</span></span>
+    </a>
+    <div class="h-nav">
+      <a href="#features">Features</a>
+      <a href="#deep-dives">How It Works</a>
+      <a href="capabilities.html">Dashboard</a>
+      <a href="causal-engine.html">Causal AI</a>
+    </div>
+    <a href="deploymorningstar.html" class="btn-ghost">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg>
+      Deploy
+    </a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hc fu">
+    <div class="ht">Exclusively for Aerospace &amp; Defense</div>
+    <h1><span class="brand">Morningstar</span><span class="sub">by AKSCI</span></h1>
+    <p>The first platform built to compute <strong style="color:var(--text)">qualification debt</strong> — the moment a supply chain disruption becomes mathematically unrecoverable — and prove it before the crisis happens. SAP tells you what you have. Kinaxis tells you what you need. Morningstar tells you when it's too late to fix it.</p>
+    <div class="ha">
+      <a href="deploymorningstar.html" class="btn-p">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg>
+        Deploy Morningstar
+      </a>
+      <a href="#features" class="btn-s">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        Explore Features
+      </a>
+    </div>
+    <div class="ha-alt"><a href="capabilities.html" class="alt-link">Launch Command Center →</a></div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section id="quote">
+  <div class="qi fu">
+    <blockquote>"The goal isn't to be better than SAP. It's to be the <strong>layer that makes SAP data actually actionable</strong> for a program manager standing in front of DCMA."</blockquote>
+    <cite>— Morningstar, Platform Thesis</cite>
+  </div>
+</section>
+
+<!-- FEATURES GRID -->
+<section id="features">
+  <div class="si">
+    <h2 class="st fu">Seven Capabilities, One Platform</h2>
+    <p class="ss fu">Every feature is purpose-built for aerospace and defense supply chains. No generic dashboards. No SAP re-skin. Just the domain logic that primes actually need.</p>
+    <div class="fg">
+      <div class="fc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="8" cy="20" r="2"/><circle cx="16" cy="20" r="2"/><line x1="11" y1="5.5" x2="6.5" y2="10.5"/><line x1="13" y1="5.5" x2="17.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="9.5" y2="18.5"/><line x1="17.5" y1="13.5" x2="14.5" y2="18.5"/><line x1="12" y1="14" x2="12" y2="18"/></svg></div>
+        <h3>Qualification Debt Clock</h3>
+        <div class="fd">Per-part, per-program AS9100/AS9102 FAI qualification timelines that compute the exact moment re-qualification of an alternate supplier exceeds available schedule margin. Rolling recalculation as lead times and milestones shift.</div>
+        <span class="ftg">Core IP — Patentable</span>
+      </div>
+      <div class="fc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="3" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="21" r="2"/><line x1="10.5" y1="4.5" x2="6.5" y2="10.5"/><line x1="13.5" y1="4.5" x2="17.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="10.5" y2="19.5"/><line x1="17.5" y1="13.5" x2="13.5" y2="19.5"/></svg></div>
+        <h3>N-Tier DNA Mapper</h3>
+        <div class="fd">Probabilistic sub-tier mapping down to Tier 3/4 for single-source and sole-source parts. Maps process dependencies — not just part/supplier — revealing hidden chokepoints like the only qualified hard anodize shop for a given alloy.</div>
+        <span class="ftg">Beyond Tier 1-2 Visibility</span>
+      </div>
+      <div class="fc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+        <h3>Regulatory Tripwire Monitor</h3>
+        <div class="fd">ITAR/EAR classification propagation across the supply chain graph. CMMC readiness scoring per supplier node with expiration tracking relative to contract period of performance. DCSA/FOCI beneficial ownership monitoring with automatic alerts.</div>
+        <span class="ftg">CMMC 2.0 · ITAR · DFARS</span>
+      </div>
+      <div class="fc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/><path d="M9 21l2-2 4 4"/></svg></div>
+        <h3>Program Schedule Entanglement</h3>
+        <div class="fd">Ingests IMS (MS Project, Primavera P6, DCMA open milestones) and computes which supply chain disruptions cause schedule variance triggering DCMA Corrective Action Requests. Maps one supplier failure to affected CLINs, deliverables, and award fees.</div>
+        <span class="ftg">IMS · EVM · FPDS-NG</span>
+      </div>
+      <div class="fc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="3" r="2.5"/><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/><circle cx="3" cy="21" r="2"/><circle cx="12" cy="21" r="2"/><circle cx="21" cy="21" r="2"/><line x1="10.5" y1="5" x2="7" y2="10.5"/><line x1="13.5" y1="5" x2="17" y2="10.5"/><line x1="7" y1="14" x2="4.5" y2="19.5"/><line x1="12" y1="14" x2="12" y2="19.5"/><line x1="17" y1="14" x2="19.5" y2="19.5"/></svg></div>
+        <h3>Collective Defense Intelligence</h3>
+        <div class="fd">Anonymized cross-customer disruption signal sharing. Five Tier-1 suppliers each see 20% individually; together they see 100%. ITAR-aware data governance with tiered contribution incentives. A Bloomberg Terminal-class network moat.</div>
+        <span class="ftg">Network Effect · Compartmentalized</span>
+      </div>
+      <div class="fc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 Q12 2 20 20"/><line x1="12" y1="20" x2="12" y2="6"/><circle cx="12" cy="20" r="2.5"/><line x1="7" y1="16" x2="9" y2="16"/><line x1="15" y1="16" x2="17" y2="16"/></svg></div>
+        <h3>Time-to-Recovery Simulator</h3>
+        <div class="fd">Side-by-side decision trees for every feasible recovery path: alternate qualification, broker bridge buy, design-around, or schedule slip. Each path modeled with FAI hold points, customer source approval timelines, and fully burdened cost.</div>
+        <span class="ftg">Decision Support Engine</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEEP DIVES -->
+<section id="deep-dives">
+  <div class="si">
+    <h2 class="st fu">The Morningstar Difference</h2>
+    <p class="ss fu">Every feature is designed around a simple truth: no ERP and no generic risk platform models aerospace-specific domain logic. That gap is our moat.</p>
+
+    <!-- 1. Qualification Debt Clock -->
+    <div class="dd">
+      <div class="dd-txt fu">
+        <h2><span class="hl">Qualification Debt Clock</span><br>When Disruption Becomes Unrecoverable</h2>
+        <p>Every platform tracks what's disrupted. <strong>None compute when disruption becomes mathematically unrecoverable.</strong> Morningstar's Qualification Debt Clock — the elapsed time at which re-qualification of an alternate supplier exceeds the program's available schedule margin — is genuinely novel.</p>
+        <ul>
+          <li>Per-part, per-program qualification timelines derived from AS9100/AS9102 FAI requirements</li>
+          <li>Distinction between "qualified at another prime" vs. "qualified for this program's drawing revision"</li>
+          <li>Rolling recalculation as lead times and program milestones shift in real time</li>
+        </ul>
+        <div class="dd-stat">No ERP or generic risk platform models this because it requires aerospace-specific domain logic.</div>
+      </div>
+      <div class="dd-img fu">
+        <div class="md"><span class="mdot r"></span><span class="mdot y"></span><span class="mdot g"></span></div>
+        <div class="mh">QUALIFICATION DEBT CLOCK</div>
+        <div class="clock-display">
+          <div class="clock-num" id="qdc-display">--:--:--</div>
+          <div class="clock-label">Until Qualification Debt — Part AS-9100-447</div>
+          <div class="clock-sub">Program: Artemis I &middot; Single-source: Titanium Casting</div>
+        </div>
+        <div class="dd-row"><span class="dc">Current schedule margin</span><span>—</span><div class="dd-bar"><div class="df warn" style="width:34%"></div></div><span class="dc">34 days</span></div>
+        <div class="dd-row"><span class="dc">Min re-qual lead time</span><span>—</span><div class="dd-bar"><div class="df crit" style="width:62%"></div></div><span class="dc">62 days</span></div>
+        <div class="dd-sum"><span class="dd-al">! Qualification Debt imminent — 28 days past threshold</span></div>
+      </div>
+    </div>
+
+    <!-- 2. DNA Mapper -->
+    <div class="dd">
+      <div class="dd-img fu">
+        <div class="md"><span class="mdot r"></span><span class="mdot y"></span><span class="mdot g"></span></div>
+        <div class="mh">DNA MAPPER — SUB-TIER DEPENDENCY</div>
+        <div class="net-grid">
+          <div class="net-node t1"><div class="nn-label">Prime</div><div class="nn-sub">Artemis Program</div></div>
+          <div class="net-node t1"><div class="nn-label">Tier 1</div><div class="nn-sub">Aerocast Inc</div></div>
+          <div class="net-node t1"><div class="nn-label">Tier 1</div><div class="nn-sub">FluidLogic</div></div>
+          <div class="net-node t2"><div class="nn-label">Tier 2</div><div class="nn-sub">Titanium Casting</div></div>
+          <div class="net-node t2"><div class="nn-label">Tier 2</div><div class="nn-sub">Valve Group</div></div>
+          <div class="net-node t3"><div class="nn-label">Tier 3</div><div class="nn-sub">Tokyo Specialty Metals</div></div>
+          <div class="net-node t3"><div class="nn-label">Tier 3</div><div class="nn-sub">Precision Forge</div></div>
+          <div class="net-node t3"><div class="nn-label">Tier 3 ★</div><div class="nn-sub">Hard Anodize — Sole Qualified</div></div>
+          <div class="net-node t3"><div class="nn-label">Tier 4</div><div class="nn-sub">Raw Material</div></div>
+        </div>
+        <div class="dd-sum" style="margin-top:10px"><span class="dd-al">! Hidden chokepoint: Sole qualified hard anodize shop for alloy Ti-6Al-4V</span></div>
+      </div>
+      <div class="dd-txt fu">
+        <h2><span class="hl">N-Tier DNA Mapper</span><br>Hidden Chokepoints No BOM-Based Tool Surfaces</h2>
+        <p>Even minor component delays can stall assembly lines — the F-35 has thousands of unique parts from hundreds of suppliers. Most platforms stop at Tier 1 or Tier 2. <strong>Morningstar walks the BOM to Tier 3 and Tier 4</strong>, mapping process dependencies, not just part numbers.</p>
+        <ul>
+          <li>Special process qualification tracking: NDT, heat treat, surface treatment, composite layup</li>
+          <li>"Who is the only facility qualified to perform this process for this drawing revision"</li>
+          <li>Renders full dependency graph — see in 30 seconds which invisible upstream node is the actual risk</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 3. Regulatory Tripwire -->
+    <div class="dd">
+      <div class="dd-txt fu">
+        <h2><span class="hl">Regulatory Tripwire Monitor</span><br>Legal Exposure Mapped Onto Your Supply Chain Graph</h2>
+        <p>Under <strong>32 CFR § 170.23</strong>, primes are required to flow CMMC levels down contractually. If a prime knowingly awards work to a non-compliant subcontractor, it faces <strong>False Claims Act liability</strong>. Morningstar maps regulatory exposure directly onto the supply chain graph.</p>
+        <ul>
+          <li>ITAR/EAR classification propagation: foreign ownership changes trigger automatic program-level alerts</li>
+          <li>CMMC readiness scoring by supplier node with expiration tracking against contract period of performance</li>
+          <li>DCSA/FOCI beneficial ownership monitoring with foreign investment alerts</li>
+        </ul>
+        <div class="dd-call"><span class="dd-tag">Legal Moat</span> SAP and Kinaxis explicitly don't touch this — it's too vertical.</div>
+      </div>
+      <div class="dd-img fu">
+        <div class="md"><span class="mdot r"></span><span class="mdot y"></span><span class="mdot g"></span></div>
+        <div class="mh">REGULATORY TRIPWIRE MONITOR</div>
+        <table class="reg-table">
+          <tr><th>Supplier</th><th>ITAR</th><th>CMMC</th><th>FOCI</th><th>Status</th></tr>
+          <tr><td>Aerocast Inc</td><td>✓</td><td>Level 2</td><td>Clear</td><td><span class="stat ok">Compliant</span></td></tr>
+          <tr><td>NanoSense Inc</td><td>✗</td><td>None</td><td>Foreign-owned</td><td><span class="stat crit">Non-Compliant</span></td></tr>
+          <tr><td>CeramicTech</td><td>−</td><td>Expiring 45d</td><td>Clear</td><td><span class="stat warn">Attention</span></td></tr>
+        </table>
+        <div class="reg-alert">! NanoSense Inc — Foreign ownership change detected — ITAR reclassification required for 3 programs</div>
+      </div>
+    </div>
+
+    <!-- 4. Program Schedule Entanglement -->
+    <div class="dd">
+      <div class="dd-img fu">
+        <div class="md"><span class="mdot r"></span><span class="mdot y"></span><span class="mdot g"></span></div>
+        <div class="mh">PROGRAM SCHEDULE ENTANGLEMENT</div>
+        <div style="padding:4px 0;margin-bottom:8px;border-bottom:1px solid var(--border)">
+          <div style="font-size:0.6rem;color:var(--text3);margin-bottom:4px">IMS — Integrated Master Schedule</div>
+          <div style="font-size:0.72rem;display:flex;justify-content:space-between"><span>WBS 1.2.4 Engine Subsystem</span><span style="color:var(--amber)">+14d slip</span></div>
+          <div style="font-size:0.72rem;display:flex;justify-content:space-between"><span>WBS 1.3.1 Avionics Bay</span><span style="color:var(--red)">Critical</span></div>
+        </div>
+        <div class="dd-row"><span class="dc">Blast Radius</span><span>—</span><div class="dd-bar"><div class="df crit" style="width:72%"></div></div><span class="dc">3 CLINs at risk</span></div>
+        <div class="dd-row"><span class="dc">Award Fee Exposure</span><span>—</span><div class="dd-bar"><div class="df warn" style="width:45%"></div></div><span class="dc">$2.4M at jeopardy</span></div>
+        <div class="dd-row"><span class="dc">DCMA CAR Risk</span><span>—</span><div class="dd-bar"><div class="df crit" style="width:88%"></div></div><span class="dc">Probable</span></div>
+        <div class="dd-sum"><span class="dd-al">! Schedule variance threshold breached — CAR likely within 14 days</span></div>
+      </div>
+      <div class="dd-txt fu">
+        <h2><span class="hl">Program Schedule Entanglement</span><br>Bridging Supply Chain Risk to Program Management</h2>
+        <p>Current SCM tools think in terms of inventory and delivery. Aerospace primes think in terms of <strong>Integrated Master Schedules (IMS) and Earned Value Management (EVM)</strong>. Morningstar bridges these worlds.</p>
+        <ul>
+          <li>Ingests MS Project, Primavera P6, or DCMA open milestones</li>
+          <li>Computes which disruptions cause schedule variance triggering DCMA Corrective Action Requests</li>
+          <li>Surface "program-level blast radius": one supplier failure → affected CLINs → deliverables → award fees</li>
+          <li>Connects FPDS-NG and USASpending.gov for public contract vehicle data</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 5. Collective Defense -->
+    <div class="dd">
+      <div class="dd-txt fu">
+        <h2><span class="hl">Collective Defense Intelligence</span><br>The Bloomberg Terminal of Aerospace Supply Chains</h2>
+        <p>If five Tier-1 suppliers all track supplier health independently, each has 20% of the picture. <strong>If they share anonymized disruption signals, each sees 100%.</strong> No competitor can replicate the dataset without the customers.</p>
+        <ul>
+          <li>Strict data compartmentalization — no competitive intelligence leakage between customers</li>
+          <li>ITAR-aware data governance for the collective intelligence layer</li>
+          <li>Tiered contribution incentives: customers who share more signal receive more signal</li>
+        </ul>
+        <div class="dd-stat">Bloomberg Terminal became unassailable because of the data network — not the terminal itself.</div>
+      </div>
+      <div class="dd-img fu">
+        <div class="md"><span class="mdot r"></span><span class="mdot y"></span><span class="mdot g"></span></div>
+        <div class="mh">COLLECTIVE DEFENSE GRID</div>
+        <div class="dd-row"><span class="dc">Anonymized signals</span><span>—</span><div class="dd-bar"><div class="df cyan" style="width:100%"></div></div><span class="dc">24 suppliers reporting</span></div>
+        <div class="dd-row"><span class="dc">Early warnings this week</span><span>—</span><div class="dd-bar"><div class="df warn" style="width:38%"></div></div><span class="dc">7 new alerts</span></div>
+        <div class="dd-row"><span class="dc">Network coverage</span><span>—</span><div class="dd-bar"><div class="df good" style="width:76%"></div></div><span class="dc">Tier 3 +4 visibility</span></div>
+        <div class="dd-sum"><span class="dd-ok">✓ Early detection: 2-3 weeks before PO acknowledgment</span></div>
+      </div>
+    </div>
+
+    <!-- 6. Time-to-Recovery -->
+    <div class="dd">
+      <div class="dd-img fu">
+        <div class="md"><span class="mdot r"></span><span class="mdot y"></span><span class="mdot g"></span></div>
+        <div class="mh">TIME-TO-RECOVERY SIMULATOR</div>
+        <div class="rec-path prime"><span class="rp-label">Expedited Alternate Qualification</span><span class="rp-stat">62 days · $340K</span></div>
+        <div class="rec-path alt"><span class="rp-label">Bridge Buy — Qualified Broker</span><span class="rp-stat">18 days · $890K</span></div>
+        <div class="rec-path risk"><span class="rp-label">Design-Around — Alternate P/N</span><span class="rp-stat">45 days · $1.2M</span></div>
+        <div class="rec-path alt"><span class="rp-label">Absorb Schedule Slip</span><span class="rp-stat">90 days · $0 direct, $4.2M penalty</span></div>
+        <div class="dd-sum"><span class="dd-ok">Optimal path: Bridge buy + parallel qualification — 18 days to recovery</span></div>
+      </div>
+      <div class="dd-txt fu">
+        <h2><span class="hl">Time-to-Recovery Simulator</span><br>Not a Heat Map — A Decision Support Engine</h2>
+        <p>Every risk platform gives you a color-coded heat map. That's table stakes. What primes actually need is: <strong>"If this supplier goes dark today, what is the fastest achievable recovery path, and what does it cost?"</strong></p>
+        <ul>
+          <li>Alternate supplier qualification timeline simulation accounting for FAI hold points</li>
+          <li>Inventory buffer depletion curve against qualification timeline — the Qualification Debt inflection point</li>
+          <li>"What-if" scenario trees with cost and schedule modeled for each path</li>
+        </ul>
+        <div class="dd-call"><span class="dd-tag">Decision Support</span> Transforms monitoring into something a VP of Supply Chain will stake her career on.</div>
+      </div>
+    </div>
+
+    <!-- 7. Zero-Footprint ERP -->
+    <div class="dd">
+      <div class="dd-txt fu">
+        <h2><span class="hl">Zero-Footprint ERP Integration</span><br>Four Hours from Contract to Insight</h2>
+        <p>The fastest path to adoption in aerospace is to <strong>not compete with the ERP</strong> — to sit on top of it as a read-only intelligence layer that requires no rip-and-replace. Morningstar's architecture is designed for this.</p>
+        <ul>
+          <li>Pre-built connectors to SAP IBP, Oracle Fusion SCM, and Deltek Costpoint</li>
+          <li>Lightweight data ingestion agent reads BOM, PO, and supplier master data — no write permissions</li>
+          <li>Passes CISO and CIO review on day one because it touches nothing in production</li>
+        </ul>
+      </div>
+      <div class="dd-img fu">
+        <div class="md"><span class="mdot r"></span><span class="mdot y"></span><span class="mdot g"></span></div>
+        <div class="mh">INTEGRATION ARCHITECTURE</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0;flex-wrap:wrap">
+          <span style="padding:6px 12px;background:rgba(0,184,217,0.06);border:1px solid rgba(0,184,217,0.12);border-radius:var(--r-sm);font-size:0.65rem">SAP IBP</span>
+          <span style="color:var(--text3);font-size:1rem">→</span>
+          <span style="padding:6px 12px;background:rgba(0,184,217,0.06);border:1px solid rgba(0,184,217,0.12);border-radius:var(--r-sm);font-size:0.65rem">Oracle Fusion SCM</span>
+          <span style="color:var(--text3);font-size:1rem">→</span>
+          <span style="padding:6px 12px;background:rgba(0,184,217,0.06);border:1px solid rgba(0,184,217,0.12);border-radius:var(--r-sm);font-size:0.65rem">Deltek Costpoint</span>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(72,187,120,0.06);border:1px solid rgba(72,187,120,0.1);border-radius:var(--r-sm);font-size:0.65rem;color:var(--green)">
+          ✓ Read-only agent &middot; No production impact &middot; CISO-approved architecture
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORM BRIEF -->
+<section id="platform-brief">
+  <div class="si">
+    <h2 class="st fu">Built on a Durable Moat</h2>
+    <p class="ss fu">Domain specificity creates switching costs. Once your qualification histories, FAI records, and IMS integrations live inside Morningstar, migrating out costs years and tens of millions.</p>
+    <div class="pb-grid">
+      <div class="pb-card fu">
+        <div class="pb-num">7</div>
+        <div class="pb-lbl">Core Capabilities</div>
+        <div class="pb-desc">Every feature purpose-built for aerospace &amp; defense supply chains — not generic SCM functionality rebranded.</div>
+      </div>
+      <div class="pb-card fu">
+        <div class="pb-num">AS9100</div>
+        <div class="pb-lbl">Deep Domain Logic</div>
+        <div class="pb-desc">First-article inspection requirements, special process qualifications, and drawing revision tracking — modeled natively.</div>
+      </div>
+      <div class="pb-card fu">
+        <div class="pb-num">4hr</div>
+        <div class="pb-lbl">Time to First Insight</div>
+        <div class="pb-desc">Zero-footprint agent deploys on existing ERP infrastructure. No rip-and-replace. No production risk.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHO IT'S FOR -->
+<section id="who-for">
+  <div class="si">
+    <h2 class="st fu">Built for the People Who Carry the Weight</h2>
+    <p class="ss fu">Morningstar is designed for the people who decide whether an aerospace supplier survives its next prime engagement.</p>
+    <div class="wg">
+      <div class="wc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <span class="who">The Program Manager</span>
+        <h3>Standing in Front of DCMA</h3>
+        <p>Needs to explain a disruption's origin and projected impact with source-cited data. Morningstar gives you the causal chain, not just a dashboard — so you walk into every review with confidence.</p>
+      </div>
+      <div class="wc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <span class="who">The VP of Supply Chain</span>
+        <h3>Your Career Is on the Line</h3>
+        <p>One unrecoverable disruption is one too many. Morningstar tells you when it's too late to fix it — and proves it before the crisis happens. Real recovery timelines, not heat maps.</p>
+      </div>
+      <div class="wc fu">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <span class="who">The Chief Compliance Officer</span>
+        <h3>False Claims Act Liability Is Real</h3>
+        <p>Under 32 CFR § 170.23, you are legally responsible for subcontractor compliance. Morningstar maps ITAR, CMMC, and FOCI exposure across your entire supplier graph — automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATION ECOSYSTEM -->
+<section id="integration">
+  <div class="si">
+    <h2 class="st fu">Integrates With Your Existing Stack</h2>
+    <p class="ss fu">Zero rip-and-replace. Morningstar sits on top of your infrastructure as a read-only intelligence layer.</p>
+    <div class="ir fu">
+      <span class="ib">SAP IBP</span>
+      <span class="ib">Oracle Fusion SCM</span>
+      <span class="ib">Deltek Costpoint</span>
+      <span class="ib">MS Project</span>
+      <span class="ib">Primavera P6</span>
+      <span class="ib">FPDS-NG</span>
+      <span class="ib">USASpending.gov</span>
+    </div>
+    <div class="ir-txt fu">
+      Pre-built connectors, lightweight read-only agent, and no write permissions required. Passes CISO and CIO review on day one.
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="fc fu">
+    <h3>See Morningstar in Action</h3>
+    <p>Get a 15-minute walkthrough tailored to your supply chain. No commitment, no sales pitch — just the product, answering your questions. We'll show you what qualification debt looks like with your own supplier data.</p>
+    <a href="deploymorningstar.html" class="btn-p" style="font-size:1rem;padding:16px 40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg>
+      Deploy Morningstar
+    </a>
+  </div>
+  <div class="fi">
+    <div class="fb">
+      <img src="logo.png" alt="AKSCI">
+      <div class="fbt">
+        <span class="fbn">AKSCI: The Morningstar Solution</span>
+        <span class="fbtg">Exclusively for the Aerospace Complexity</span>
+      </div>
+    </div>
+    <div class="fnav">
+      <a href="capabilities.html">Command Center</a>
+      <span class="sep">|</span>
+      <a href="causal-engine.html">Causal AI</a>
+      <span class="sep">|</span>
+      <a href="#">Privacy</a>
+    </div>
+    <div class="fcopy">&copy; 2025 AKSCI. All rights reserved.</div>
+  </div>
+</footer>
+
+</div><!-- /main -->
+
+<script>
+(function(){
+'use strict';
+
+var overlay = document.getElementById('intro');
+var textEl = document.getElementById('ty');
+var cursor = document.getElementById('cu');
+var byline = document.getElementById('by');
+var main = document.getElementById('main');
+var sentence = 'Entering the Morningstar';
+var idx = 0;
+
+if (sessionStorage.getItem('aksci_intro_seen')) {
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  main.style.display = 'block';
+  setTimeout(boot, 100);
+} else {
+  sessionStorage.setItem('aksci_intro_seen', 'true');
+  document.body.style.overflow = 'hidden';
+  function typeNext() {
+    if (idx < sentence.length) {
+      textEl.textContent += sentence.charAt(idx);
+      idx++;
+      setTimeout(typeNext, 60 + Math.random() * 50);
+    } else {
+      cursor.classList.add('h');
+      byline.style.opacity = '1';
+      setTimeout(function() {
+        overlay.classList.add('fade');
+        document.body.style.overflow = '';
+        main.style.display = 'block';
+        setTimeout(function() { overlay.style.display = 'none'; boot(); }, 750);
+      }, 500);
+    }
+  }
+  typeNext();
+}
+
+function boot() {
+  initScroll();
+  initProgress();
+  initHeader();
+  initQDC();
+  setTimeout(applyStagger, 200);
+}
+
+function initScroll() {
+  var els = document.querySelectorAll('.fu');
+  if (!els.length) return;
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('v'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function(el) { obs.observe(el); });
+}
+
+function applyStagger() {
+  document.querySelectorAll('.fg, .wg, .pb-grid').forEach(function(grid) {
+    for (var i = 0; i < grid.children.length; i++) {
+      if (grid.children[i].classList.contains('fu')) {
+        grid.children[i].classList.add('st' + ((i % 7) + 1));
+      }
+    }
+  });
+}
+
+function initProgress() {
+  var bar = document.getElementById('pb');
+  if (!bar) return;
+  function tick() {
+    var scrollTop = window.scrollY;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', tick, { passive: true });
+  tick();
+}
+
+function initHeader() {
+  var header = document.getElementById('hdr');
+  var lastY = 0;
+  function onScroll() {
+    var sy = window.scrollY;
+    header.classList.toggle('scrolled', sy > window.innerHeight * 0.4);
+    if (sy > 120) { header.classList.toggle('hidden', sy > lastY); }
+    else { header.classList.remove('hidden'); }
+    lastY = sy;
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+function initQDC() {
+  var targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + 28);
+  var display = document.getElementById('qdc-display');
+  if (!display) return;
+  function tick() {
+    var now = new Date();
+    var diff = targetDate - now;
+    if (diff <= 0) { display.textContent = 'DEBT OWED'; return; }
+    var d = Math.floor(diff / 86400000);
+    var h = Math.floor((diff % 86400000) / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+    display.textContent = d + 'd ' + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+})();
+</script>
+
+</body>
+</html>

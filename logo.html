@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AKSCI Logo Animation</title>
+
+<style>
+    body {
+        margin: 0;
+        background: black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    object {
+        width: 900px;
+        max-width: 90vw;
+    }
+</style>
+
+</head>
+
+<body>
+
+<object id="logo" data="AKSCI_logo.svg" type="image/svg+xml"></object>
+
+<script>
+
+const logo = document.getElementById('logo');
+
+logo.addEventListener('load', () => {
+
+    const svg = logo.contentDocument.querySelector('svg');
+
+    const paths = svg.querySelectorAll('path');
+
+    // Remove black background rectangle
+    svg.querySelectorAll('rect').forEach(rect => {
+        rect.remove();
+    });
+
+    paths.forEach((path, i) => {
+
+        const length = path.getTotalLength();
+
+        path.style.fill = 'transparent';
+        path.style.stroke = 'white';
+        path.style.strokeWidth = '2';
+
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+
+        path.style.filter = `
+            drop-shadow(0 0 5px white)
+            drop-shadow(0 0 12px white)
+        `;
+
+        path.style.transition =
+            `stroke-dashoffset 2.5s ease ${i * 0.03}s,
+             fill 0.8s ease 2.8s`;
+
+    });
+
+    // Trigger drawing
+    setTimeout(() => {
+
+        paths.forEach(path => {
+            path.style.strokeDashoffset = '0';
+        });
+
+    }, 100);
+
+    // Reveal final logo
+    setTimeout(() => {
+
+        paths.forEach(path => {
+
+            path.style.fill = 'white';
+            path.style.stroke = 'none';
+            path.style.filter = 'none';
+
+        });
+
+    }, 3200);
+
+});
+
+</script>
+
+</body>
+</html>

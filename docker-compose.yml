@@ -1,0 +1,99 @@
+# =============================================================================
+# AKSCI Morningstar — Docker Compose
+# =============================================================================
+# Start:   docker compose up -d
+# Stop:    docker compose down
+# Logs:    docker compose logs -f
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL with pgvector
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: morningstar-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: morningstar
+      POSTGRES_USER: morningstar
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-morningstar}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U morningstar"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Redis (caching + Bull job queue)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: morningstar-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Node.js API Server
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: morningstar-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3456
+      DATABASE_URL: postgres://morningstar:${DB_PASSWORD:-morningstar}@postgres:5432/morningstar
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      SESSION_SECRET: ${SESSION_SECRET:-morningstar-session-prod}
+      CORS_ORIGIN: ${CORS_ORIGIN:-true}
+      SIMULATION_HOST: simulation
+      SIMULATION_PORT: "8000"
+    ports:
+      - "3456:3456"
+    volumes:
+      - ./backend/data-store.json:/app/data-store.json
+
+  # ---------------------------------------------------------------------------
+  # Python Simulation Microservice
+  # ---------------------------------------------------------------------------
+  simulation:
+    build:
+      context: ./backend/simulation
+      dockerfile: Dockerfile
+    container_name: morningstar-simulation
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      SIMULATION_PORT: "8000"
+      MAIN_API_URL: http://api:3456
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:

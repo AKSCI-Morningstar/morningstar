@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morningstar — Command Center</title>
+<meta name="description" content="AKSCI Morningstar Command Center — Real-time supply chain intelligence dashboard for aerospace and defense.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="capabilities.css">
+<style>
+/* GLOBAL */
+:root {
+  --bg-dark: #060810;
+  --surface-0: #0A0D1A;
+  --surface-1: #0E1224;
+  --surface-2: #13182E;
+  --surface-3: #171E36;
+  --border-0: rgba(255,255,255,0.04);
+  --border-1: rgba(255,255,255,0.07);
+  --border-2: rgba(255,255,255,0.12);
+  --cyan: #67E8F9;
+  --cyan-bright: #A5F3FC;
+  --cyan-dim: #1E5F8A;
+  --cyan-glow-sm: 0 0 8px rgba(103,232,249,0.2);
+  --cyan-glow-md: 0 0 20px rgba(103,232,249,0.15);
+  --amber: #FCD34D;
+  --amber-dim: rgba(252,211,77,0.15);
+  --red: #FCA5A5;
+  --green: #34D399;
+  --purple: #A5B4FC;
+  --text-1: #F0F4FA;
+  --text-2: #A0B0C8;
+  --text-3: #60728A;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --font-heading: 'Space Grotesk', sans-serif;
+}
+body{overflow:hidden;height:100vh;user-select:none;-webkit-user-select:none}
+*,*::before,*::after{box-sizing:border-box}
+/* Typography overrides */
+.lp-card-title, .rp-card-title, .tab-btn, .gantt-title, .sp-title, .cc-title, .score-label { font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.04em; }
+.header-title-line, .ms-mono { font-family: 'Syne', sans-serif; }
+
+/* KEYFRAMES */
+@keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(110,231,183,0.4)}50%{opacity:0.8;box-shadow:0 0 0 4px rgba(110,231,183,0)}}
+@keyframes pulse-amber{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(252,211,77,0.4)}50%{opacity:0.8;box-shadow:0 0 0 4px rgba(252,211,77,0)}}
+@keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes notifIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes notifOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(12px)}}
+@keyframes shimmer{0%{border-color:rgba(252,165,165,0.25);box-shadow:0 0 0 0 rgba(252,165,165,0)}50%{border-color:rgba(252,165,165,0.5);box-shadow:0 0 14px 2px rgba(252,165,165,0.15)}100%{border-color:rgba(252,165,165,0.25);box-shadow:0 0 0 0 rgba(252,165,165,0)}}
+@keyframes brBarIn{from{width:0!important}to{}}
+
+/* SCROLLBARS */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-1);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-2)}
+
+/* FOCUS RINGS */
+@media(prefers-reduced-motion:no-preference){
+  button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid rgba(103,232,249,0.4);outline-offset:2px}
+}
+
+/* BUTTON BASE */
+button{all:unset;cursor:pointer;box-sizing:border-box;transition:all 0.15s}
+button::-moz-focus-inner{border:0}
+
+/* SELECT */
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6' fill='none' stroke='%236B7280' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:10px 6px;padding-right:24px;cursor:pointer}
+
+/* RANGE INPUT */
+input[type=range]{appearance:none;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-track{height:2px;background:var(--border-1);border-radius:1px}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:12px;height:12px;background:var(--cyan);border-radius:50%;border:none;box-shadow:0 0 6px rgba(103,232,249,0.4);margin-top:-5px}
+input[type=range]::-moz-range-track{height:2px;background:var(--border-1);border-radius:1px;border:none}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--cyan);border-radius:50%;border:none;box-shadow:0 0 6px rgba(103,232,249,0.4)}
+input[type=range]:focus{outline:none}
+
+/* DIVIDER */
+.resilience-divider{border:none;border-top:1px solid var(--border-0);margin:10px 0}
+.header-bottom-rule{height:1px;background:linear-gradient(90deg,transparent,var(--cyan) 20%,var(--cyan) 80%,transparent);opacity:0.15;position:relative;z-index:1001}
+
+/* ===== NAV BAR ===== */
+.nav-bar{height:36px;flex-shrink:0;display:flex;align-items:center;background:rgba(10,13,26,0.85);backdrop-filter:blur(6px);border-bottom:1px solid var(--border-0);padding:0 16px;gap:2px;position:relative;z-index:1000}
+.nav-section{display:flex;align-items:center;gap:2px;padding:0 4px}
+.nav-section-label{font-family:'DM Mono',monospace;font-size:0.4rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;padding:0 8px;opacity:0.6;flex-shrink:0}
+.nav-section-sep{width:1px;height:18px;background:var(--border-0);margin:0 6px;flex-shrink:0}
+.nav-bar-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;background:transparent;color:var(--text-2);font-family:'Space Grotesk',sans-serif;font-size:0.52rem;border:1px solid transparent;cursor:pointer;transition:all 0.12s;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;text-decoration:none;height:24px}
+.nav-bar-btn:hover{background:rgba(103,232,249,0.06);border-color:rgba(103,232,249,0.1);color:var(--cyan)}
+.nav-bar-btn.active{background:rgba(103,232,249,0.08);border-color:rgba(103,232,249,0.15);color:var(--cyan);box-shadow:0 0 6px rgba(103,232,249,0.08)}
+.nav-bar-btn .nb-icon{font-size:0.6rem;line-height:1}
+
+/* ===== HEADER ===== */
+header{min-height:56px;height:56px;position:relative;z-index:1001}
+.header-inner{display:flex;align-items:center;justify-content:space-between;width:100%;height:100%;padding:0 16px}
+.header-left{display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:0;overflow:hidden}
+.header-center{display:flex;align-items:center;gap:5px;flex:1;justify-content:center;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.header-center::-webkit-scrollbar{display:none}
+.header-right{display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;flex:0 1 auto;min-width:0}
+.header-right::-webkit-scrollbar{display:none}
+
+/* M monogram */
+.ms-mono{width:36px;height:36px;border-radius:6px;background:rgba(103,232,249,0.12);border:1px solid rgba(103,232,249,0.25);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:800;font-size:1.1rem;color:var(--cyan);box-shadow:0 0 12px rgba(103,232,249,0.15);flex-shrink:0}
+
+/* Title stack */
+.header-title-stack{display:flex;flex-direction:column;line-height:1.3;overflow:hidden;min-width:0}
+.header-title-line,.header-sub-line{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.header-title-line{font-family:var(--font-heading);font-weight:700;font-size:0.9rem;color:var(--text-1)}
+.header-sub-line{font-family:var(--font-sans);font-weight:400;font-size:0.6rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase}
+
+/* Stat chips */
+.header-stat-chip{background:rgba(255,255,255,0.03);border:1px solid var(--border-0);border-radius:4px;padding:2px 7px;text-align:center;white-space:nowrap;display:inline-flex;flex-direction:column;align-items:center;gap:0;font-size:0.45rem;color:var(--text-3);letter-spacing:0.04em}
+.header-stat-chip .stat-num{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-1);font-weight:400;line-height:1}
+
+/* Status */
+#header-status{display:inline-flex;align-items:center;gap:6px}
+.header-status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse-dot 2s infinite;display:inline-block;flex-shrink:0}
+.status-warning .header-status-dot{background:var(--amber);animation-name:pulse-amber}
+.status-critical .header-status-dot{background:var(--red)}
+#header-status-text{font-family:var(--font-heading);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-2)}
+
+/* Clock */
+#header-clock{font-family:var(--font-mono);font-size:0.65rem;color:var(--cyan);letter-spacing:0.04em;border-left:1px solid var(--border-1);padding-left:8px;white-space:nowrap}
+
+/* Alerts */
+.header-alerts-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(252,211,77,0.08);border:1px solid rgba(252,211,77,0.2);border-radius:4px;padding:3px 10px;cursor:pointer;transition:all 0.15s}
+.header-alerts-chip:hover{background:rgba(252,211,77,0.12);border-color:rgba(252,211,77,0.3)}
+.alerts-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block;flex-shrink:0}
+.header-alerts-chip[data-alerts="0"] .alerts-dot{background:var(--text-3);animation:none}
+.alerts-count{font-family:var(--font-mono);font-size:0.7rem;color:var(--amber);font-weight:600;line-height:1}
+.alerts-label{font-family:var(--font-heading);font-size:0.5rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em}
+#alerts-count{font-family:var(--font-mono);font-size:0.7rem;color:var(--amber);font-weight:600}
+
+/* Nav links */
+.nav-link{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:var(--r-sm);background:transparent;color:var(--text-2);font-family:var(--font-heading);font-weight:600;font-size:0.58rem;border:1px solid var(--border-1);cursor:pointer;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;text-decoration:none;min-height:0}
+.nav-link:hover{background:rgba(103,232,249,0.08);border-color:rgba(103,232,249,0.15);color:var(--cyan);box-shadow:var(--cyan-glow-sm)}
+.nav-link[href="deploymorningstar.html"]{background:rgba(103,232,249,0.12);border-color:rgba(103,232,249,0.35);color:var(--cyan);box-shadow:0 0 8px rgba(103,232,249,0.1)}
+
+/* ===== LAYOUT ===== */
+main{flex:1;display:flex;flex-direction:column;min-height:0}
+.app-layout{display:grid;grid-template-columns:280px 1fr 300px;grid-template-rows:1fr;flex:1;min-height:0}
+
+/* ===== LEFT PANEL ===== */
+.left-panel{border-right:1px solid var(--border-1);overflow-y:auto;display:flex;flex-direction:column;gap:0;background:linear-gradient(180deg,var(--surface-0) 0%,#090E1A 100%)}
+
+/* Resilience card — hero */
+#resilience-card{background:linear-gradient(160deg,rgba(103,232,249,0.05) 0%,var(--surface-1) 60%);border-bottom:1px solid var(--border-1);padding:16px 12px;text-align:center}
+.score-ring-wrap{position:relative;display:inline-block;margin:0 auto 6px}
+.score-ring-wrap svg{width:140px;height:140px;display:block;margin:0 auto}
+.score-ring-fg{filter:drop-shadow(0 0 8px rgba(103,232,249,0.3))}
+#score-number{font-family:var(--font-mono);font-size:2.2rem;font-weight:400;color:var(--text-1);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.outer-glow-ring{display:none}
+.score-label{font-family:var(--font-heading);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-3);margin-top:8px}
+.trend-indicator{font-family:var(--font-mono);font-size:0.55rem;color:var(--text-2);margin-top:2px}
+.trend-indicator.stable{color:var(--green)}
+.trend-indicator.up{color:var(--cyan)}
+.trend-indicator.down{color:var(--red)}
+#score-sub{font-family:var(--font-sans);font-size:0.55rem;color:var(--text-3);margin-top:2px}
+
+/* AI summary button */
+#btn-ai-summary{width:100%;background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.15);border-radius:4px;padding:6px;font-family:var(--font-heading);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--cyan);margin-top:6px;text-align:center}
+#btn-ai-summary:hover{background:rgba(103,232,249,0.12);border-color:rgba(103,232,249,0.25)}
+
+/* Score breakdown list */
+#score-factors-list{list-style:none;padding:0;margin:0}
+#score-factors-list li{display:flex;justify-content:space-between;padding:5px 12px;font-size:0.6rem;background:transparent;font-family:var(--font-mono)}
+#score-factors-list li.s-positive{border-left:2px solid var(--green);color:var(--green)}
+#score-factors-list li.s-negative{border-left:2px solid var(--red);color:var(--red)}
+#score-factors-list li.s-neutral{border-left:2px solid var(--amber);color:var(--text-2)}
+
+#lbl{margin:10px;padding:10px;background:var(--surface-1);border:1px solid var(--border-1);border-radius:var(--r-md);font-size:0.65rem;color:var(--text-2)}
+
+/* LP Cards */
+.lp-card{border-bottom:1px solid var(--border-0);position:relative}
+.lp-card-header{padding:8px 12px;border-bottom:1px solid var(--border-0);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.lp-card-header:hover{background:rgba(255,255,255,0.01)}
+.lp-card-title{font-family:var(--font-heading);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3)}
+.lp-card-toggle{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-3);transition:transform 0.2s}
+.lp-card.open .lp-card-toggle{transform:rotate(90deg)}
+.lp-card-body{padding:0 12px 12px}
+.lp-card.collapsed .lp-card-body{display:none}
+
+/* Network stats */
+.network-pulse-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px}
+.np-tile{text-align:center;padding:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:4px}
+.np-num{font-family:var(--font-mono);font-size:0.9rem;color:var(--text-1);display:block}
+.np-label{font-family:var(--font-heading);font-size:0.45rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;display:block}
+
+/* Tier legend */
+.tier-legend{display:flex;flex-direction:column;gap:4px;padding:0 14px 14px}
+.tl-item{display:flex;align-items:center;gap:8px;font-size:0.6rem;font-family:var(--font-mono);color:var(--text-2)}
+.tl-swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+/* Certification */
+.cert-health-bar-wrap{padding:10px 12px}
+#cert-health-bar{height:6px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;margin-bottom:6px}
+#cert-health-bar .cert-health-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));border-radius:4px;transition:width 0.5s}
+.cert-health-stats{display:flex;gap:10px;font-family:var(--font-mono);font-size:0.58rem;margin-bottom:6px}
+.ch-stat{color:var(--text-2)}
+.ch-val{color:var(--green);font-weight:600}
+.ch-val.warn{color:var(--amber)}
+.ch-val.crit{color:var(--red)}
+.cert-expiry-list{list-style:none;padding:0;margin:0;font-family:var(--font-mono);font-size:0.55rem}
+.cert-expiry-list li{padding:3px 0;color:var(--text-2);display:flex;align-items:center;gap:6px}
+.cert-expiry-list li::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cert-expiry-list li:has(+ .ce-name near-future)::before{background:var(--amber)}
+.cert-expiry-list li:has(+ .ce-name expired)::before{background:var(--red)}
+.cert-expiry-list li::before{background:var(--green)}
+.cert-legend,.cert-health-panel{display:none}
+
+/* AI Chat */
+.ai-chat-card{display:flex;flex-direction:column}
+#ai-chat-messages-default{min-height:120px;max-height:200px;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+#ai-chat-messages-default .chat-empty-state{font-size:0.58rem;color:var(--text-3);text-align:center;padding:20px 0;font-family:var(--font-sans);flex:1;display:flex;align-items:center;justify-content:center}
+.ai-chat-input{border-top:1px solid var(--border-0);display:flex;padding:6px 10px;gap:4px}
+.ai-chat-input input{flex:1;padding:5px 8px;background:var(--bg-dark);border:1px solid var(--border-1);border-radius:4px;color:var(--text-1);font-family:var(--font-mono);font-size:0.63rem;outline:none}
+.ai-chat-input input:focus{border-color:rgba(103,232,249,0.3)}
+.chat-send{color:var(--cyan);font-size:0.8rem;padding:4px 8px;background:transparent;border:none;border-radius:4px;cursor:pointer}
+.chat-send:hover{background:rgba(103,232,249,0.1)}
+.ai-chat-lock{display:flex;justify-content:space-between;padding:4px 8px;font-size:0.5rem;color:var(--text-3);background:rgba(0,0,0,0.2);border-top:1px solid var(--border-0)}
+.protect-box{padding:6px 10px;background:rgba(252,165,165,0.05);border:1px solid rgba(252,165,165,0.1);border-radius:4px;font-size:0.5rem;color:var(--red);text-align:center;font-family:var(--font-mono);letter-spacing:0.05em}
+
+/* ===== GRAPH PANEL ===== */
+.graph-panel{position:relative;overflow:hidden;min-width:0;background:linear-gradient(rgba(103,232,249,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(103,232,249,0.015) 1px,transparent 1px),radial-gradient(ellipse 65% 45% at 50% -5%,rgba(103,232,249,0.05) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 85% 105%,rgba(165,180,252,0.03) 0%,transparent 60%),#03060D;background-size:40px 40px,40px 40px,100% 100%,100% 100%,100% 100%}
+.graph-panel svg{width:100%;height:100%;display:block}
+.graph-flash{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity 0.5s}
+.graph-flash.active{opacity:1}
+.particle-canvas{position:absolute;inset:0;pointer-events:none;z-index:5}
+#graph-svg{position:relative;z-index:6}
+
+/* Graph toolbar — pill stack */
+.graph-toolbar{position:absolute;top:12px;right:12px;z-index:10;display:flex;flex-direction:column;gap:2px;background:rgba(10,12,16,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--border-1);border-radius:8px;padding:4px}
+.graph-toolbar button{width:32px;height:28px;border-radius:5px;background:transparent;border:none;color:var(--text-3);font-size:0.7rem;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;padding:0}
+.graph-toolbar button:hover{background:rgba(103,232,249,0.08);color:var(--cyan)}
+.graph-toolbar button.active{background:rgba(103,232,249,0.12);color:var(--cyan);box-shadow:0 0 6px rgba(103,232,249,0.15)}
+.graph-toolbar hr{height:1px;background:var(--border-0);margin:3px 4px;border:none}
+
+/* Graph info — hidden (redundant with header) */
+.graph-info{display:none}
+/* Ensure graph always visible */
+.graph-panel{min-height:300px;flex:1;display:block}
+
+/* Tooltip */
+#graph-tooltip{position:absolute;z-index:20;pointer-events:none;opacity:0;background:rgba(8,10,14,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border-2);border-radius:6px;padding:8px 12px;box-shadow:0 4px 20px rgba(0,0,0,0.5);max-width:260px;transition:opacity 0.15s}
+#graph-tooltip.visible{opacity:1}
+.tt-name{font-family:var(--font-heading);font-size:0.72rem;font-weight:700;color:var(--text-1)}
+.tt-status{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-2);margin-top:2px}
+.tt-stat-label{font-family:var(--font-mono);font-size:0.55rem;color:var(--text-3);margin-top:4px}
+.tt-row{display:flex;justify-content:space-between;gap:12px;margin-top:2px}
+.tt-label{font-family:var(--font-sans);font-size:0.58rem;color:var(--text-3)}
+.tt-val{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-1);font-weight:500}
+
+/* Minimap */
+.minimap{position:absolute;bottom:16px;right:12px;width:140px;height:90px;border:1px solid var(--border-1);border-radius:6px;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);overflow:hidden;z-index:10}
+
+/* Ticker */
+#ticker-container{position:absolute;bottom:16px;left:12px;z-index:10;max-width:400px;overflow:hidden;display:flex;flex-wrap:wrap;gap:4px}
+.ticker-item{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:rgba(8,10,14,0.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--border-1);border-radius:4px;font-size:0.55rem;color:var(--text-2);font-family:var(--font-mono);max-width:340px}
+.ticker-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.ticker-dot.critical{background:var(--red);box-shadow:0 0 4px rgba(252,165,165,0.5)}
+.ticker-dot.warning{background:var(--amber);box-shadow:0 0 4px rgba(252,211,77,0.4)}
+.ticker-dot.nominal{background:var(--green)}
+
+/* Search bar */
+#search-bar-wrap{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:20;display:none;gap:6px;background:rgba(8,10,14,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border-2);border-radius:6px;padding:6px 12px;align-items:center;min-width:320px;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+#search-bar-wrap::before{content:'\2315';font-size:0.75rem;color:var(--cyan);flex-shrink:0;line-height:1}
+#search-bar{flex:1;background:transparent;border:none;color:var(--text-1);font-family:var(--font-mono);font-size:0.65rem;outline:none;padding:2px 0}
+#search-bar::placeholder{color:var(--text-3)}
+#search-esc-hint{font-size:0.5rem;color:var(--text-3);margin-left:auto;font-family:var(--font-mono)}
+
+/* Watchlist star */
+.watchlist-star{cursor:pointer;color:var(--text-3);font-size:0.8rem;transition:color 0.15s}
+.watchlist-star.active{color:var(--amber);text-shadow:0 0 8px rgba(252,211,77,0.4)}
+
+/* Gantt */
+.gantt-overlay{padding:8px;font-size:0.6rem;background:var(--surface-2);border-radius:4px;border:1px solid var(--border-1);margin-top:6px}
+.gantt-title{font-family:var(--font-heading);font-weight:600;font-size:0.7rem;margin-bottom:6px;color:var(--text-1)}
+.gantt-row{display:grid;grid-template-columns:1fr 2fr 0.5fr;gap:6px;padding:3px 0;align-items:center;font-size:0.55rem}
+.gantt-label{color:var(--text-2);font-family:var(--font-mono)}
+.gantt-track{height:12px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;position:relative}
+.gantt-bar{height:100%;border-radius:3px;min-width:4%}
+.gantt-bar.retool{background:var(--cyan)}
+.gantt-bar.recert{background:var(--amber)}
+.gantt-bar.design{background:var(--purple)}
+.gantt-bar.logistics{background:var(--green)}
+.gantt-days{font-family:var(--font-mono);color:var(--text-2);text-align:right;font-size:0.5rem}
+
+/* Sourcing popup */
+.sourcing-popup{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;background:var(--surface-1);border:1px solid var(--border-2);border-radius:var(--r-md);padding:16px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.6)}
+.sourcing-popup.visible{display:block}
+.sp-title{font-family:var(--font-heading);font-weight:700;font-size:0.8rem;margin-bottom:8px}
+.sp-option{padding:8px;margin:4px 0;background:var(--surface-2);border:1px solid var(--border-1);border-radius:4px;font-size:0.7rem;cursor:pointer;display:flex;justify-content:space-between;transition:all 0.15s}
+.sp-option:hover{border-color:var(--cyan);background:rgba(103,232,249,0.05)}
+.sp-option.sp-critical{border-color:rgba(252,165,165,0.3)}
+.sp-option .api-assign-btn{padding:2px 8px;background:rgba(103,232,249,0.1);border:1px solid rgba(103,232,249,0.2);border-radius:3px;color:var(--cyan);cursor:pointer;font-size:0.5rem;font-family:var(--font-mono)}
+
+/* ===== RIGHT PANEL ===== */
+.right-panel{display:flex;flex-direction:column;border-left:1px solid var(--border-1);overflow-y:auto;background:var(--surface-0)}
+
+/* RP Cards */
+.rp-card{background:var(--surface-1);border:1px solid var(--border-0);border-radius:6px;margin:8px;overflow:hidden}
+.rp-card:last-child{margin-bottom:8px}
+.rp-card-title{padding:7px 10px;border-bottom:1px solid var(--border-0);font-family:var(--font-heading);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);background:rgba(0,0,0,0.15)}
+.rp-card .rp-card-body{padding:10px}
+
+/* Sim status */
+#sim-status{font-size:0.6rem;color:var(--text-3);font-style:italic;text-align:center;padding:12px 0;font-family:var(--font-sans)}
+#sim-status.loaded{font-style:normal;color:var(--text-2)}
+
+/* Sim callout */
+#sim-callout{background:rgba(252,165,165,0.06);border:1px solid rgba(252,165,165,0.15);border-radius:5px;padding:8px 10px;margin:6px 8px}
+.sim-callout-name{font-family:var(--font-heading);font-size:0.7rem;font-weight:700;color:var(--text-1)}
+.sim-callout-risk{font-family:var(--font-mono);font-size:0.58rem;color:var(--red);margin-top:2px}
+
+/* Simulate button */
+#btn-simulate{display:block;width:calc(100% - 16px);margin:6px 8px;background:rgba(252,165,165,0.1);border:1px solid rgba(252,165,165,0.25);border-radius:5px;padding:8px;font-family:var(--font-heading);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--red);cursor:pointer;text-align:center;transition:all 0.15s}
+#btn-simulate:hover{background:rgba(252,165,165,0.18);box-shadow:0 0 12px rgba(252,165,165,0.15)}
+#btn-simulate.running{animation:shimmer 2s infinite}
+
+/* Compare/Clear buttons */
+.btn-secondary{display:block;width:calc(100% - 16px);margin:4px 8px;background:rgba(255,255,255,0.03);border:1px solid var(--border-0);border-radius:4px;padding:6px;font-family:var(--font-heading);font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);cursor:pointer;text-align:center;transition:all 0.15s}
+.btn-secondary:hover{background:rgba(255,255,255,0.06);color:var(--text-1)}
+
+/* Cascade counter */
+#cascade-counter{background:rgba(252,165,165,0.05);border:1px solid rgba(252,165,165,0.1);border-radius:4px;padding:6px 10px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-2);display:flex;gap:12px;margin:6px 8px}
+.cascade-counter{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-2)}
+#cascade-counter #cc-revenue{color:var(--red);font-weight:600}
+
+#sim-result{padding:8px;margin:6px 8px;background:var(--surface-2);border:1px solid var(--border-1);border-radius:var(--r-sm);font-size:0.65rem}
+
+/* Revenue Impact Calculator */
+.rp-card select,.rp-card input[type=range]{width:100%;margin:4px 0}
+.rp-card select{padding:4px 8px;background:var(--bg-dark);border:1px solid var(--border-1);border-radius:4px;color:var(--text-1);font-family:var(--font-mono);font-size:0.6rem;outline:none}
+.rp-card select:focus{border-color:rgba(103,232,249,0.3)}
+.rp-card input[type=range]{margin:4px 0}
+#ric-value{font-family:var(--font-mono);font-size:0.9rem;font-weight:700}
+#ric-value.at-risk{color:var(--red)}
+
+/* Consolidation card */
+#consolidation-card{padding:10px;background:var(--surface-2);border:1px solid var(--border-1);border-radius:6px;margin:8px;cursor:pointer;transition:all 0.15s}
+#consolidation-card:hover{border-color:var(--cyan);background:rgba(103,232,249,0.03)}
+.cc-title{font-family:var(--font-heading);font-weight:600;font-size:0.7rem;color:var(--text-1)}
+.cc-detail{font-size:0.6rem;color:var(--text-2);margin-top:4px;font-family:var(--font-sans)}
+
+/* Layer select */
+#layer-select{width:100%;padding:4px 8px;background:var(--bg-dark);border:1px solid var(--border-1);border-radius:4px;color:var(--text-1);font-family:var(--font-mono);font-size:0.6rem;outline:none;margin:8px}
+#layer-select:focus{border-color:rgba(103,232,249,0.3)}
+
+/* Action plan */
+.action-plan-section{padding:8px 10px;margin:0}
+.action-plan-item:last-child{border-bottom:none}
+.api-label{font-family:var(--font-mono);font-size:0.58rem;color:var(--cyan);font-weight:500}
+.api-detail{font-family:var(--font-sans);color:var(--text-2);font-size:0.58rem}
+.api-assign-btn{padding:2px 6px;background:rgba(103,232,249,0.08);border:1px solid rgba(103,232,249,0.15);border-radius:3px;font-family:var(--font-mono);font-size:0.52rem;color:var(--cyan);cursor:pointer;text-align:center;transition:all 0.15s}
+.api-assign-btn:hover{background:rgba(103,232,249,0.15)}
+
+/* Coop */
+.coop-count{font-family:var(--font-heading);font-weight:700;font-size:1.2rem;color:var(--cyan)}
+.coop-request-btn{padding:4px 12px;background:rgba(103,232,249,0.1);border:1px solid rgba(103,232,249,0.2);border-radius:4px;color:var(--cyan);cursor:pointer;font-size:0.55rem;font-family:var(--font-mono);transition:all 0.15s}
+.coop-request-btn:hover{background:rgba(103,232,249,0.15)}
+
+/* Benchmark */
+.benchmark-msg{font-size:0.6rem;color:var(--text-2);text-align:center;padding:8px;font-family:var(--font-sans)}
+.benchmark-row{display:flex;align-items:center;gap:8px;padding:4px 10px;font-size:0.6rem}
+.br-label{color:var(--text-2);min-width:32px;font-family:var(--font-mono);font-weight:500}
+.br-bar-wrap{flex:1;height:12px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden}
+.br-bar{height:100%;border-radius:3px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1)}
+.br-bar.self{background:var(--cyan)}
+.br-bar.avg{background:var(--text-3)}
+.br-bar.top{background:var(--green)}
+.br-val{font-family:var(--font-mono);font-size:0.55rem;color:var(--text-2);min-width:40px;text-align:right}
+
+/* Watchlist */
+#wl-count{font-family:var(--font-heading);font-weight:700;font-size:1rem;color:var(--cyan)}
+#watchlist-container{padding:10px;text-align:center}
+
+/* Export buttons */
+.btn-ghost{display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 16px);margin:4px 8px;padding:7px 12px;background:transparent;border:1px solid var(--border-1);border-radius:4px;font-family:var(--font-heading);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-2);cursor:pointer;transition:all 0.15s}
+.btn-ghost:hover{background:rgba(255,255,255,0.04);color:var(--text-1)}
+.export-highlight{background:rgba(103,232,249,0.08);border-color:rgba(103,232,249,0.2);color:var(--cyan)}
+.export-highlight:hover{background:rgba(103,232,249,0.12);border-color:rgba(103,232,249,0.3)}
+
+/* What-if badge */
+.what-if-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:0.5rem;margin-left:4px;font-family:var(--font-mono)}
+.what-if-badge.good{background:rgba(110,231,183,0.1);color:var(--green)}
+.what-if-badge.bad{background:rgba(252,165,165,0.1);color:var(--red)}
+
+/* Stock levels */
+.stock-level{font-family:var(--font-mono);font-size:0.6rem}
+.stock-level.ok{color:var(--green)}
+.stock-level.low{color:var(--amber)}
+.stock-level.crit{color:var(--red)}
+
+/* Geo */
+.geo-risk-heat{position:absolute;inset:0;z-index:2;pointer-events:none}
+.geo-hotspot{fill:rgba(252,165,165,0.15);stroke:rgba(252,165,165,0.3);stroke-width:0.5;cursor:pointer;transition:all 0.15s}
+.geo-hotspot.active{fill:rgba(252,165,165,0.3);stroke:rgba(252,165,165,0.6)}
+.geo-ocean{fill:rgba(103,232,249,0.02)}
+
+/* Drawer */
+.drawer-panel{position:fixed;top:0;left:-300px;width:300px;height:100vh;z-index:200;background:var(--surface-0);border-right:1px solid var(--border-1);transition:left 0.3s;overflow-y:auto}
+.drawer-panel.open{left:0}
+.drawer-close{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text-3);cursor:pointer;font-size:1rem;padding:4px}
+
+/* Event highlight */
+.event-highlight{position:absolute;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse at center,rgba(103,232,249,0.08),transparent 60%)}
+
+/* Text helpers */
+.hl{color:var(--cyan);font-weight:600}
+.warn{color:var(--amber)}
+.good{color:var(--green)}
+.ai-narrative-content{font-size:0.7rem;line-height:1.6;color:var(--text-2);white-space:pre-wrap}
+
+/* Inventory */
+.inv-supplier-link{color:var(--cyan);cursor:pointer;text-decoration:underline;font-size:0.6rem;font-family:var(--font-mono)}
+.inv-supplier-link:hover{color:var(--cyan-bright)}
+.revenue-at-risk-card{padding:12px;margin:8px;background:var(--surface-2);border:1px solid var(--border-1);border-radius:var(--r-sm)}
+
+/* Profile badges */
+.profile-badge{padding:3px 10px;border-radius:4px;font-size:0.58rem;font-family:var(--font-mono);display:inline-block;font-weight:500}
+.profile-badge.dfars{background:rgba(103,232,249,0.1);color:var(--cyan);border:1px solid rgba(103,232,249,0.2)}
+.profile-badge.itar{background:rgba(167,139,250,0.1);color:var(--purple);border:1px solid rgba(167,139,250,0.2)}
+.profile-badge.cmmc{background:rgba(110,231,183,0.1);color:var(--green);border:1px solid rgba(110,231,183,0.2)}
+.profile-badge.iso{background:rgba(252,211,77,0.1);color:var(--amber);border:1px solid rgba(252,211,77,0.2)}
+.profile-badge.as9100{background:rgba(103,232,249,0.1);color:var(--cyan);border:1px solid rgba(103,232,249,0.2)}
+.profile-audit-row{display:flex;justify-content:space-between;padding:4px 0;font-size:0.6rem;border-bottom:1px solid var(--border-0);font-family:var(--font-mono)}
+.profile-risk-flag{padding:4px 8px;font-size:0.55rem;border-radius:3px;margin:2px 0;font-family:var(--font-mono)}
+.profile-risk-flag.critical{background:rgba(252,165,165,0.08);color:var(--red);border:1px solid rgba(252,165,165,0.15)}
+.profile-risk-flag.warning{background:rgba(252,211,77,0.08);color:var(--amber);border:1px solid rgba(252,211,77,0.15)}
+
+/* Heatmap */
+.hm-high{background:rgba(252,165,165,0.06)}
+.hm-none{background:transparent}
+
+/* Suggestions */
+.suggestion-item{padding:6px;margin:4px 0;border-radius:4px;background:rgba(103,232,249,0.03);border:1px solid var(--border-1);font-size:0.6rem}
+
+/* ===== MODALS ===== */
+.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.modal-overlay.visible{opacity:1;pointer-events:auto}
+.modal-overlay.visible .modal{animation:modalIn 0.2s ease-out both}
+.modal{background:var(--surface-1);border:1px solid var(--border-2);border-radius:10px;max-width:680px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.02);position:relative}
+.modal-header-section{padding:14px 18px;border-bottom:1px solid var(--border-0);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2)}
+.modal-header-section h3{font-family:var(--font-heading);font-size:0.85rem;font-weight:700;color:var(--text-1)}
+.modal-close{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:0.85rem;border-radius:4px;padding:4px 6px;transition:all 0.15s}
+.modal-close:hover{background:rgba(255,255,255,0.06);color:var(--text-1)}
+.modal-body-section{padding:16px 18px}
+.modal-footer-section{padding:10px 18px;border-top:1px solid var(--border-0);display:flex;justify-content:flex-end;gap:8px;background:rgba(0,0,0,0.1)}
+
+/* Supplier profile modal differentiation */
+#sp-name{font-family:var(--font-heading);font-size:1.1rem;font-weight:800;color:var(--text-1)}
+#sp-risk-badge{border-radius:4px;font-family:var(--font-mono);font-size:0.58rem;padding:2px 10px;font-weight:500}
+#sp-subtitle{font-size:0.65rem;color:var(--text-2);margin-bottom:8px;font-family:var(--font-sans)}
+#sp-badges{margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px}
+#sp-sparkline-wrap{background:rgba(0,0,0,0.2);border-radius:4px;padding:4px;margin-bottom:8px}
+#sp-financial{font-size:0.6rem;font-family:var(--font-mono);margin-bottom:8px}
+#sp-audit{margin-bottom:8px}
+#sp-risk-flags{margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px}
+#sp-prevetted{padding:6px 10px;background:rgba(110,231,183,0.08);border:1px solid rgba(110,231,183,0.15);border-radius:4px;font-size:0.6rem;color:var(--green);font-family:var(--font-mono)}
+
+/* Inv overlay */
+.inventory-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
+
+/* ===== NOTIFICATIONS ===== */
+.notification-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.notification{padding:10px 14px;border-radius:6px;font-family:var(--font-mono);font-size:0.62rem;box-shadow:0 4px 20px rgba(0,0,0,0.4);animation:notifIn 0.2s ease;display:flex;align-items:center;gap:8px;max-width:320px;pointer-events:auto}
+.notification.error{background:var(--surface-2);border:1px solid rgba(252,165,165,0.3);color:var(--red);border-left:3px solid var(--red)}
+.notification.success{background:var(--surface-2);border:1px solid rgba(110,231,183,0.3);color:var(--green);border-left:3px solid var(--green)}
+.notification.info{background:var(--surface-2);border:1px solid rgba(103,232,249,0.3);color:var(--cyan);border-left:3px solid var(--cyan)}
+.notification.out{animation:notifOut 0.2s ease both}
+
+/* ===== FINAL POLISH ===== */
+.lp-card .lp-card-body{padding:10px 12px}
+.action-plan-item{display:grid;grid-template-columns:40px 1fr 60px;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-0);font-size:0.6rem}
+body{display:flex;flex-direction:column}
+#classification-banner{flex-shrink:0;position:relative;z-index:1001}
+header{flex-shrink:0}
+.header-bottom-rule{flex-shrink:0}
+.rp-card{transition:border-color 0.15s}
+
+/* ===== INTELLIGENCE STRIP ===== */
+.intel-strip{height:48px;flex-shrink:0;background:linear-gradient(90deg,rgba(103,232,249,0.02) 0%,var(--surface-0) 50%,rgba(103,232,249,0.02) 100%);border-top:1px solid var(--border-0);border-bottom:1px solid var(--border-0);display:flex;align-items:center;overflow:hidden;gap:0}
+.intel-strip-inner{display:flex;align-items:center;gap:0;padding:0;height:100%;overflow:hidden;flex:1;position:relative}
+.intel-strip-track{display:flex;align-items:center;gap:16px;padding:0 12px;height:100%;white-space:nowrap;flex-shrink:0;animation:ticker-scroll 90s linear infinite}
+@keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.strip-tag{flex-shrink:0;font-family:'DM Mono',monospace;font-size:0.44rem;color:var(--cyan);letter-spacing:0.08em;text-transform:uppercase;padding:3px 10px;background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.12);border-radius:3px;white-space:nowrap}
+.strip-signal{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:4px;font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--text-2);white-space:nowrap;flex-shrink:0}
+.strip-signal .sig-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.strip-signal.critical .sig-dot{background:var(--red);box-shadow:0 0 4px rgba(252,165,165,0.4)}
+.strip-signal.warning .sig-dot{background:var(--amber);box-shadow:0 0 4px rgba(252,211,77,0.3)}
+.strip-signal.nominal .sig-dot{background:var(--green)}
+.strip-sep{width:1px;height:20px;background:var(--border-1);flex-shrink:0}
+
+/* ===== NLQ COMMAND BAR ===== */
+.nlq-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9000;width:min(680px,90vw);background:rgba(10,13,26,0.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(103,232,249,0.12);border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6),0 0 0 1px rgba(103,232,249,0.05);transition:all 0.2s;overflow:hidden}
+.nlq-bar:focus-within{border-color:rgba(103,232,249,0.3);box-shadow:0 8px 60px rgba(0,0,0,0.7),0 0 0 1px rgba(103,232,249,0.12)}
+.nlq-input-wrap{display:flex;align-items:center;gap:8px;padding:8px 12px}
+.nlq-input{flex:1;background:transparent;border:none;outline:none;color:var(--text-1);font-family:'Space Grotesk',sans-serif;font-size:0.72rem;padding:4px 0}
+.nlq-input::placeholder{color:var(--text-3);font-family:'DM Mono',monospace;font-size:0.58rem}
+.nlq-btn{width:30px;height:30px;border-radius:6px;background:rgba(103,232,249,0.08);border:1px solid rgba(103,232,249,0.12);color:var(--cyan);font-size:0.75rem;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nlq-btn:hover{background:rgba(103,232,249,0.15);border-color:rgba(103,232,249,0.25)}
+.nlq-btn.voice{background:rgba(103,232,249,0.04);border-color:rgba(103,232,249,0.06);font-size:0.85rem}
+.nlq-btn.voice.listening{background:rgba(252,165,165,0.12);border-color:var(--red);animation:voicePulse 1.2s ease-in-out infinite}
+@keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(252,165,165,0.3)}50%{box-shadow:0 0 12px 2px rgba(252,165,165,0.15)}}
+.nlq-suggestions{display:flex;gap:4px;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none}
+.nlq-suggestions::-webkit-scrollbar{display:none}
+.nlq-chip{padding:3px 8px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border-0);font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3);cursor:pointer;white-space:nowrap;transition:all 0.12s;flex-shrink:0}
+.nlq-chip:hover{background:rgba(103,232,249,0.06);border-color:rgba(103,232,249,0.1);color:var(--cyan)}
+.nlq-response{max-height:0;overflow:hidden;transition:max-height 0.3s ease,opacity 0.2s;opacity:0}
+.nlq-response.open{max-height:400px;opacity:1}
+.nlq-response-inner{padding:0 12px 10px;border-top:1px solid rgba(103,232,249,0.06);margin-top:0}
+.nlq-r-text{font-family:'Space Grotesk',sans-serif;font-size:0.62rem;color:var(--text-2);line-height:1.6;padding:8px 0 4px}
+.nlq-r-text strong{color:var(--text-1)}
+.nlq-r-text .hl-cyan{color:var(--cyan)}
+.nlq-r-text .hl-red{color:var(--red)}
+.nlq-r-text .hl-amber{color:var(--amber)}
+.nlq-r-text .hl-green{color:var(--green)}
+.nlq-r-foot{font-family:'DM Mono',monospace;font-size:0.4rem;color:var(--text-3);display:flex;gap:12px;padding:4px 0 0}
+.nlq-r-foot span{display:flex;align-items:center;gap:4px}
+
+/* ===== EXPLAIN PANEL ===== */
+.explain-toggle{padding:2px 6px;border-radius:3px;background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.1);font-family:'DM Mono',monospace;font-size:0.42rem;color:var(--cyan);cursor:pointer;transition:all 0.12s;white-space:nowrap}
+.explain-toggle:hover{background:rgba(103,232,249,0.12);border-color:rgba(103,232,249,0.2)}
+.explain-panel{max-height:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.2s;opacity:0}
+.explain-panel.open{max-height:500px;opacity:1}
+.explain-panel-inner{padding:8px 10px;border-top:1px solid rgba(103,232,249,0.06);margin-top:4px}
+.explain-node{display:flex;align-items:flex-start;gap:6px;padding:3px 0;font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3);line-height:1.5}
+.explain-node .en-dot{width:4px;height:4px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.explain-node .en-dot.red{background:var(--red)}
+.explain-node .en-dot.amber{background:var(--amber)}
+.explain-node .en-dot.green{background:var(--green)}
+.explain-node .en-dot.cyan{background:var(--cyan)}
+.explain-source{font-size:0.4rem;color:var(--text-3);padding:4px 0 0 10px;display:flex;gap:8px;flex-wrap:wrap}
+.explain-source span{display:flex;align-items:center;gap:3px}
+.explain-summary{margin-top:4px;padding-top:4px;border-top:1px solid var(--border-0);font-size:0.42rem;color:var(--text-3);line-height:1.5}
+.explain-summary strong{color:var(--text-1)}
+
+/* ===== HEADER MODAL TRIGGERS ===== */
+.header-trigger-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);color:var(--text-3);font-family:'DM Mono',monospace;font-size:0.48rem;cursor:pointer;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.06em}
+.header-trigger-btn:hover{background:rgba(103,232,249,0.06);border-color:rgba(103,232,249,0.15);color:var(--cyan)}
+.header-trigger-btn .trig-icon{font-size:0.65rem;line-height:1}
+
+/* ===== DEBUG ===== */
+#tb-labels-card{display:block}
+
+/* ===== MACRO INTELLIGENCE ===== */
+.macro-card .lp-card-body{padding:8px 10px}
+.macro-score-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.macro-gauge-wrap{position:relative;width:60px;height:60px;flex-shrink:0}
+.macro-gauge-wrap svg{width:60px;height:60px;display:block}
+.macro-gauge-bg{fill:none;stroke:var(--border-1);stroke-width:5}
+.macro-gauge-fg{fill:none;stroke:var(--cyan);stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset 0.6s ease}
+.macro-gauge-fg.amber{stroke:var(--amber)}
+.macro-gauge-fg.red{stroke:var(--red)}
+.macro-gauge-fg.green{stroke:var(--green)}
+.macro-gauge-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-mono);font-size:0.75rem;color:var(--text-1);pointer-events:none}
+.macro-pillars{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:4px 0;border-top:1px solid var(--border-0);margin-top:4px}
+.macro-pillar{display:flex;justify-content:space-between;padding:2px 4px;font-family:var(--font-mono);font-size:0.45rem}
+.macro-pillar .mp-label{color:var(--text-3)}
+.macro-pillar .mp-val{color:var(--text-1);font-weight:500}
+.macro-pillar .mp-val.high{color:var(--red)}
+.macro-pillar .mp-val.medium{color:var(--amber)}
+.macro-pillar .mp-val.low{color:var(--green)}
+.macro-commodity-ticker{display:flex;gap:4px;overflow-x:auto;padding:4px 0;scrollbar-width:none}
+.macro-commodity-ticker::-webkit-scrollbar{display:none}
+.mc-item{flex-shrink:0;display:flex;align-items:center;gap:4px;padding:2px 6px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px;font-family:var(--font-mono);font-size:0.42rem}
+.mc-item .mc-sym{color:var(--text-3);font-weight:500}
+.mc-item .mc-price{color:var(--text-1)}
+.mc-item .mc-chg{font-size:0.38rem}
+.mc-item .mc-chg.up{color:var(--green)}
+.mc-item .mc-chg.down{color:var(--red)}
+.macro-ports-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:0.4rem;margin-top:4px}
+.macro-ports-table th{padding:2px 4px;text-align:left;color:var(--text-3);font-weight:400;border-bottom:1px solid var(--border-0)}
+.macro-ports-table td{padding:2px 4px;color:var(--text-2);border-bottom:1px solid var(--border-0)}
+.macro-ports-table .cong-green{color:var(--green)}
+.macro-ports-table .cong-yellow{color:var(--amber)}
+.macro-ports-table .cong-red{color:var(--red)}
+.macro-regions{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px 0}
+.macro-region{padding:3px 6px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px;text-align:center}
+.macro-region .mr-name{font-family:var(--font-mono);font-size:0.38rem;color:var(--text-3);text-transform:uppercase}
+.macro-region .mr-pulse{font-family:var(--font-mono);font-size:0.55rem;color:var(--text-1);font-weight:500}
+.macro-refresh-btn{padding:2px 8px;background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.1);border-radius:3px;font-family:var(--font-mono);font-size:0.4rem;color:var(--cyan);cursor:pointer;transition:all 0.12s}
+.macro-refresh-btn:hover{background:rgba(103,232,249,0.12);border-color:rgba(103,232,249,0.2)}
+.macro-refresh-btn:disabled{opacity:0.4;cursor:default}
+.macro-trend-btn{padding:2px 6px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px;font-family:var(--font-mono);font-size:0.38rem;color:var(--text-3);cursor:pointer}
+.macro-trend-btn:hover{color:var(--cyan);border-color:rgba(103,232,249,0.15)}
+#macro-chart-modal .modal-body-section{max-height:500px;overflow-y:auto}
+#macro-chart-container{width:100%;height:300px}
+.macro-rec-item{padding:4px 8px;margin-bottom:4px;border-radius:3px;font-family:'Space Grotesk',sans-serif;font-size:0.52rem;border-left:2px solid var(--cyan);background:rgba(103,232,249,0.03)}
+.macro-rec-item.critical{border-left-color:var(--red);background:rgba(252,165,165,0.04)}
+.macro-rec-item.high{border-left-color:var(--amber);background:rgba(252,211,77,0.03)}
+.macro-rec-item .rec-priority{font-family:var(--font-mono);font-size:0.35rem;text-transform:uppercase;letter-spacing:0.06em}
+.macro-rec-item.critical .rec-priority{color:var(--red)}
+.macro-rec-item.high .rec-priority{color:var(--amber)}
+.macro-rec-item .rec-priority.low{color:var(--green)}
+.macro-rec-item .rec-message{color:var(--text-2);margin-top:1px}
+</style>
+</head>
+<body>
+
+<div id="classification-banner" style="height:20px;background:rgba(103,232,249,0.06);border-bottom:1px solid rgba(103,232,249,0.12);display:flex;align-items:center;justify-content:center;gap:24px;font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);letter-spacing:0.18em;text-transform:uppercase;user-select:none;flex-shrink:0">
+  <span>AKSCI / MORNINGSTAR v2.5.0</span>
+  <span style="color:var(--border-2)">|</span>
+  <span>UNCLASSIFIED // FOR OFFICIAL USE ONLY</span>
+  <span style="color:var(--border-2)">|</span>
+  <span>QUALIFICATION DEBT INTELLIGENCE</span>
+  <span style="color:var(--border-2)">|</span>
+  <span>SESSION: DEMO-2026</span>
+  <span style="color:var(--border-2)">|</span>
+  <span id="banner-clock-secondary" style="color:var(--cyan);font-family:'DM Mono',monospace;">—</span>
+  <span style="font-size:0.4rem;color:var(--text-3);letter-spacing:0.1em;margin-left:4px;opacity:0.6">DATA: SPIRE · SEDAR · D&B · OSINT</span>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="ms-mono">M</div>
+      <div class="header-title-stack">
+        <div class="header-title-line">Morningstar Command Center</div>
+        <div class="header-sub-line">AKSCI &middot; Real-time Supply Chain Intelligence</div>
+      </div>
+      <div style="margin-left:12px;padding:2px 8px;background:rgba(103,232,249,0.08);border:1px solid rgba(103,232,249,0.15);border-radius:10px;font-family:'DM Mono',monospace;font-size:0.44rem;color:var(--cyan);letter-spacing:0.04em;white-space:nowrap">TIME-TO-VALUE: <span style="font-weight:600">14 mins</span></div>
+    </div>
+    <div class="header-center">
+      <div class="header-stat-chip"><span class="stat-num" id="ns-programs">0</span>&nbsp;Programs</div>
+      <div class="header-stat-chip"><span class="stat-num" id="ns-suppliers">0</span>&nbsp;Suppliers</div>
+      <div class="header-stat-chip"><span class="stat-num" id="ns-components">0</span>&nbsp;Components</div>
+      <div class="header-stat-chip"><span class="stat-num" id="ns-nodes">0</span>&nbsp;Total</div>
+      <div id="header-status" class="header-status status-nominal"><span class="header-status-dot"></span><span class="header-status-text" id="header-status-text">Nominal</span></div>
+      <div class="header-clock" id="header-clock">00:00:00Z</div>
+      <div class="header-alerts-chip" id="header-alerts-chip"><span class="alerts-dot"></span><span class="alerts-count" id="alerts-count">0</span><span class="alerts-label">Alerts</span></div>
+    </div>
+    <div class="header-right">
+      <span id="header-view-score" class="nav-link" style="cursor:pointer" onclick="document.getElementById('modal-resilience').classList.add('visible')">Score</span>
+      <span class="header-trigger-btn" onclick="var o=document.getElementById('inventory-overlay');o.style.display='flex';o.classList.add('visible')"><span class="trig-icon">📦</span> Inventory</span>
+      <a href="causal-engine.html" class="nav-link">Causal AI</a>
+      <span class="nav-link" style="cursor:pointer" onclick="document.getElementById('modal-integrations').classList.add('visible')">Integrations</span>
+      <a href="deploymorningstar.html" class="nav-link">Deploy</a>
+      <span class="nav-link" style="cursor:pointer" onclick="document.getElementById('modal-pricing').classList.add('visible')">Pricing</span>
+    </div>
+  </div>
+</header>
+<div class="header-bottom-rule"></div>
+
+<!-- NAV BAR -->
+<div class="nav-bar">
+  <div class="nav-section">
+    <span class="nav-section-label">Explore</span>
+    <a href="index.html" class="nav-bar-btn"><span class="nb-icon">◈</span> Platform</a>
+    <span class="nav-bar-btn active" onclick="notify('Dashboard — current view','info')"><span class="nb-icon">⬡</span> Dashboard</span>
+    <span class="nav-bar-btn" onclick="notify('Opening Supply Chain Topology Map','info')"><span class="nb-icon">⊞</span> Topology</span>
+    <span class="nav-bar-btn" onclick="notify('Opening Causal AI Engine','info')"><span class="nb-icon">⟐</span> Causal Engine</span>
+  </div>
+  <div class="nav-section-sep"></div>
+  <div class="nav-section">
+    <span class="nav-section-label">Domains</span>
+    <span class="nav-bar-btn" onclick="notify('Opening Supplier Intelligence module','info')"><span class="nb-icon">◉</span> Suppliers</span>
+    <span class="nav-bar-btn" onclick="notify('Opening Inventory &amp; Stock module','info')"><span class="nb-icon">📦</span> Inventory</span>
+    <span class="nav-bar-btn" onclick="notify('Opening Risk &amp; Compliance module','info')"><span class="nb-icon">⚑</span> Risk &amp; Compliance</span>
+    <span class="nav-bar-btn" onclick="notify('Opening Program Schedule module','info')"><span class="nb-icon">⇱</span> Programs</span>
+  </div>
+  <div class="nav-section-sep"></div>
+  <div class="nav-section">
+    <span class="nav-section-label">Actions</span>
+    <a href="deploymorningstar.html" class="nav-bar-btn" style="background:rgba(103,232,249,0.08);border-color:rgba(103,232,249,0.2);color:var(--cyan)"><span class="nb-icon">⚡</span> Deploy</a>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.42rem;color:var(--text-3);letter-spacing:0.04em;flex-shrink:0">
+    <span style="width:4px;height:4px;border-radius:50%;background:var(--green);box-shadow:0 0 4px rgba(52,211,153,0.5)"></span>
+    All systems nominal
+    <span style="color:var(--border-1);margin:0 4px">|</span>
+    <span id="nav-clock" style="color:var(--cyan)">--:--:--Z</span>
+  </div>
+</div>
+
+<main role="main"><div class="app-layout">
+  <!-- LEFT PANEL -->
+  <div class="left-panel" id="left-panel-data">
+    <div class="lp-card full" id="resilience-card" style="cursor:pointer" onclick="document.getElementById('modal-resilience').classList.add('visible')">
+      <div class="lp-card-body" style="text-align:center">
+        <div class="score-ring-wrap">
+          <svg viewBox="0 0 160 160" width="140" height="140">
+            <defs><linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00C4E8"/><stop offset="100%" stop-color="#33D4F0"/></linearGradient></defs>
+            <circle class="score-ring-bg" cx="80" cy="80" r="68"></circle>
+            <circle class="score-ring-fg" id="score-ring" cx="80" cy="80" r="68" stroke-dasharray="427.26" stroke-dashoffset="213.63"></circle>
+          </svg>
+          <div class="score-number" id="score-number">74</div>
+          <div class="outer-glow-ring"></div>
+        </div>
+        <div class="score-label">Resilience Score</div>
+        <div class="trend-indicator stable" id="trend-indicator">→ Stable</div>
+        <div class="score-sub" id="score-sub">Supply chain health index</div>
+        <hr class="resilience-divider">
+        <button class="ai-summary-btn" id="btn-ai-summary">∗ AI Narrative Summary</button>
+      </div>
+    </div>
+    <ul class="score-breakdown-list" id="score-factors-list">
+      <li class="s-positive"><span>✓ Certified suppliers</span><span>+12</span></li>
+      <li class="s-negative"><span>✗ Expiring certs</span><span>-8</span></li>
+      <li class="s-neutral"><span>○ Single-source risk</span><span>-5</span></li>
+    </ul>
+    <div id="lbl"></div>
+    <div class="lp-card" id="tb-labels-card">
+      <div class="lp-card-header"><span class="lp-card-title">Network Stats</span><span class="lp-card-toggle">▶</span></div>
+      <div class="network-pulse-grid">
+        <div class="np-tile"><span class="np-num" id="ns-nodes2" style="font-size:0.9rem">62</span><span class="np-label">Nodes</span></div>
+        <div class="np-tile"><span class="np-num" id="ns-links2" style="font-size:0.9rem">147</span><span class="np-label">Edges</span></div>
+        <div class="np-tile"><span class="np-num" style="font-size:0.9rem;color:var(--cyan)">14</span><span class="np-label">Programs</span></div>
+        <div class="np-tile"><span class="np-num" style="font-size:0.9rem;color:var(--amber)">3</span><span class="np-label">At-Risk</span></div>
+      </div>
+    </div>
+    <!-- Inventory Pulse -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Inventory Pulse</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--amber);text-transform:uppercase;letter-spacing:0.06em">3 CRITICAL</span></div>
+      <div class="lp-card-body" style="padding:8px 10px">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:grid;grid-template-columns:1fr 60px 50px;gap:4px;padding:3px 6px;background:rgba(252,165,165,0.06);border:1px solid rgba(252,165,165,0.1);border-radius:3px;font-size:0.52rem"><span style="font-family:'Space Grotesk',sans-serif;color:var(--text-1);font-weight:500">Ti-6Al-4V Bar Stock</span><span style="font-family:'DM Mono',monospace;color:var(--red);text-align:right">0 units</span><span style="font-family:'DM Mono',monospace;color:var(--red);text-align:right">STOCKOUT</span></div>
+          <div style="display:grid;grid-template-columns:1fr 60px 50px;gap:4px;padding:3px 6px;background:rgba(252,165,165,0.06);border:1px solid rgba(252,165,165,0.1);border-radius:3px;font-size:0.52rem"><span style="font-family:'Space Grotesk',sans-serif;color:var(--text-1);font-weight:500">Valve Seat Assembly</span><span style="font-family:'DM Mono',monospace;color:var(--red);text-align:right">4 units</span><span style="font-family:'DM Mono',monospace;color:var(--red);text-align:right">CRITICAL</span></div>
+          <div style="display:grid;grid-template-columns:1fr 60px 50px;gap:4px;padding:3px 6px;background:rgba(252,211,77,0.04);border:1px solid rgba(252,211,77,0.08);border-radius:3px;font-size:0.52rem"><span style="font-family:'Space Grotesk',sans-serif;color:var(--text-1);font-weight:500">Composite Pre-Preg</span><span style="font-family:'DM Mono',monospace;color:var(--amber);text-align:right">12 units</span><span style="font-family:'DM Mono',monospace;color:var(--amber);text-align:right">LOW</span></div>
+          <div style="display:grid;grid-template-columns:1fr 60px 50px;gap:4px;padding:3px 6px;background:rgba(52,211,153,0.03);border:1px solid rgba(52,211,153,0.06);border-radius:3px;font-size:0.52rem"><span style="font-family:'Space Grotesk',sans-serif;color:var(--text-1);font-weight:500">Fastener Kit #8847</span><span style="font-family:'DM Mono',monospace;color:var(--green);text-align:right">847 units</span><span style="font-family:'DM Mono',monospace;color:var(--green);text-align:right">OK</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;padding:3px 6px;font-family:'DM Mono',monospace;font-size:0.48rem">
+          <span style="color:var(--text-3)">Total line items: <strong style="color:var(--text-1)">247</strong></span>
+          <span style="color:var(--text-3)">Stockout value: <strong style="color:var(--red)">$2.8M</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GLOBAL MACRO INTELLIGENCE -->
+    <div class="lp-card macro-card" id="macro-card">
+      <div class="lp-card-header" style="cursor:pointer" onclick="document.getElementById('macro-body').classList.toggle('collapsed')">
+        <span class="lp-card-title">Global Macro Intelligence</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <span class="macro-refresh-btn" id="macro-refresh-btn" onclick="event.stopPropagation();refreshMacroData()">&#8635; Refresh</span>
+          <span class="macro-trend-btn" id="macro-trend-btn" onclick="event.stopPropagation();showMacroTrend()">&#9654; Trend</span>
+        </span>
+      </div>
+      <div class="lp-card-body" id="macro-body">
+        <div class="macro-score-row" id="macro-score-row" style="cursor:pointer" onclick="event.stopPropagation();showMacroTrend()">
+          <div class="macro-gauge-wrap" id="macro-gauge-wrap">
+            <svg viewBox="0 0 70 70">
+              <circle class="macro-gauge-bg" cx="35" cy="35" r="28"></circle>
+              <circle class="macro-gauge-fg" id="macro-gauge-fg" cx="35" cy="35" r="28" stroke-dasharray="175.93" stroke-dashoffset="87.96"></circle>
+            </svg>
+            <div class="macro-gauge-num" id="macro-score-num">--</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-family:var(--font-mono);font-size:0.42rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Aerospace Macro Risk</div>
+            <div style="font-family:var(--font-mono);font-size:0.35rem;color:var(--text-3)" id="macro-trend-label">&#8594; Loading...</div>
+          </div>
+        </div>
+        <div class="macro-pillars" id="macro-pillars"></div>
+        <div style="font-family:var(--font-mono);font-size:0.38rem;color:var(--text-3);padding:4px 0 2px;text-transform:uppercase;letter-spacing:0.06em">Critical Commodities</div>
+        <div class="macro-commodity-ticker" id="macro-commodity-ticker"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 2px;margin-top:2px">
+          <span style="font-family:var(--font-mono);font-size:0.38rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Port Congestion</span>
+          <span style="font-family:var(--font-mono);font-size:0.35rem;color:var(--text-3)">Green / Yellow / Red</span>
+        </div>
+        <table class="macro-ports-table" id="macro-ports-table"><tbody id="macro-ports-body"></tbody></table>
+        <div style="font-family:var(--font-mono);font-size:0.38rem;color:var(--text-3);padding:4px 0 2px;margin-top:2px;text-transform:uppercase;letter-spacing:0.06em">Aerospace Production Pulse</div>
+        <div class="macro-regions" id="macro-regions"></div>
+      </div>
+    </div>
+
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Certification Health</span><span class="lp-card-toggle">▶</span></div>
+      <div class="cert-health-bar-wrap" id="cert-health-panel">
+        <div id="cert-health-bar"><div class="cert-health-bar-fill" style="width:72%"></div></div>
+        <div class="cert-health-stats"><span class="ch-stat">Fully: <span class="ch-val" id="ch-fully-cert">12</span></span><span class="ch-stat">Expiring: <span class="ch-val warn" id="ch-expiring">3</span></span><span class="ch-stat">Missing: <span class="ch-val crit" id="ch-missing">2</span></span></div>
+        <ul class="cert-expiry-list" id="ch-expiry-list"><li><span class="ce-name">AS9100</span> — Aerocast, expires 2026-09-15</li></ul>
+      </div>
+    </div>
+    <div id="tier-legend" class="tier-legend"></div>
+    <div id="cert-legend" style="display:none"></div>
+    <div id="cert-health-panel" style="display:none"></div>
+    <!-- ===== AI CHAT removed — moved to standalone flow ===== -->
+    <!-- N-Tier DNA Mapper -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">N-Tier DNA Mapper</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--cyan);text-transform:uppercase;letter-spacing:0.06em">Beyond Tier 1-2</span></div>
+      <div class="lp-card-body" style="padding:10px 12px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em">Probabilistic sub-tier · 14-node trace</div>
+        <div style="background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.1);border-radius:4px;padding:8px 10px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">Ti-6Al-4V Casting Chain</span><span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--amber)">Tier 3</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.5">StellarMet → Baoji Smelter (sole-source) → unidentified secondary alloy processor → hard anodize shop (sole qual)</div>
+        </div>
+        <div style="background:rgba(52,211,153,0.03);border:1px solid rgba(52,211,153,0.08);border-radius:4px;padding:8px 10px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">Composite Structures Chain</span><span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--green)">Tier 2</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.5">NanoAlloy Ltd → Tokyo Pre-Preg (sole qual) → unidentified carbon fiber weaver → NDT lab (sole qual for this layup)</div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-1)">87%</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.42rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Mapping Confidence</div></div>
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber)">3</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.42rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Hidden Chokepoints</div></div>
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--cyan)">62</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.42rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Mapped Nodes</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Qualification Debt Clock -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Qualification Debt Clock</span><span style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--red);letter-spacing:0.04em;">LIVE</span></div>
+      <div class="lp-card-body" style="padding:10px 12px">
+        <div style="background:rgba(252,165,165,0.06);border:1px solid rgba(252,165,165,0.15);border-radius:5px;padding:8px 10px;margin-bottom:4px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.62rem;font-weight:600;color:var(--text-1)">Ti-6Al-4V Casting</span><span style="font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--red)">12d 04h</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3)">AS-9100-447 · F-35 Program · SOLE SOURCE · Re-qual: 94d</div>
+          <div style="height:3px;background:rgba(255,255,255,0.04);border-radius:2px;margin-top:4px;overflow:hidden"><div style="height:100%;width:88%;background:linear-gradient(90deg,var(--red),#FF6B6B);border-radius:2px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);margin-top:2px"><span>Qual window</span><span style="color:var(--red)">88% · 12d remaining of 106d</span></div>
+        </div>
+        <div style="background:rgba(252,211,77,0.04);border:1px solid rgba(252,211,77,0.12);border-radius:5px;padding:8px 10px;margin-bottom:4px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.62rem;font-weight:600;color:var(--text-1)">Ceramic Valve Seat</span><span style="font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--amber)">34d 11h</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3)">VS-8842-A · Artemis Program · DUAL SOURCE · Re-qual: 62d</div>
+          <div style="height:3px;background:rgba(255,255,255,0.04);border-radius:2px;margin-top:4px;overflow:hidden"><div style="height:100%;width:55%;background:var(--amber);border-radius:2px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);margin-top:2px"><span>Qual window</span><span style="color:var(--amber)">55% · 34d remaining of 76d</span></div>
+        </div>
+        <div style="background:rgba(252,211,77,0.03);border:1px solid rgba(252,211,77,0.08);border-radius:5px;padding:8px 10px;margin-bottom:4px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.62rem;font-weight:600;color:var(--text-1)">Composite Pre-Preg</span><span style="font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--amber)">67d 08h</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3)">CP-3319-B · Orion Capsule · SOLE SOURCE · Re-qual: 82d</div>
+          <div style="height:3px;background:rgba(255,255,255,0.04);border-radius:2px;margin-top:4px;overflow:hidden"><div style="height:100%;width:28%;background:var(--amber);border-radius:2px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);margin-top:2px"><span>Qual window</span><span style="color:var(--amber)">28% · 67d remaining of 93d</span></div>
+        </div>
+        <div style="margin-bottom:6px;padding:4px 8px;background:rgba(103,232,249,0.03);border:1px dashed rgba(103,232,249,0.08);border-radius:3px;font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3);text-align:center">AI: 3 of 7 parts in debt — F-35 Ti casting at critical threshold. Recommend immediate bridge buy.</div>
+        <button style="width:100%;padding:4px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(103,232,249,0.2)'" onmouseout="this.style.color='var(--text-3)';this.style.borderColor='rgba(103,232,249,0.1)'" onclick="document.getElementById('nlq-input').value='Show all parts in qualification debt with risk levels';nlqQueryLLM()">View All 7 Parts in Debt →</button>
+      </div>
+    </div>
+    <!-- Regulatory Tripwire Monitor -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Regulatory Tripwires</span><span style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--amber)">3 ACTIVE</span></div>
+      <div class="lp-card-body" style="padding:10px 12px">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:rgba(252,165,165,0.05);border:1px solid rgba(252,165,165,0.12);border-radius:4px"><span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--red);flex-shrink:0;margin-top:1px">⚑</span><div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">FOCI Ownership Flag</div><div style="font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--text-3);margin-top:1px">NanoAlloy Ltd — 32% foreign beneficial interest exceeds ITAR threshold</div></div></div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:rgba(252,211,77,0.04);border:1px solid rgba(252,211,77,0.1);border-radius:4px"><span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber);flex-shrink:0;margin-top:1px">⚑</span><div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">CMMC Cert Expiry</div><div style="font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--text-3);margin-top:1px">Aerocast Systems — Level 2 expires in 41 days · 3 active contracts affected</div></div></div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:rgba(252,211,77,0.04);border:1px solid rgba(252,211,77,0.1);border-radius:4px"><span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber);flex-shrink:0;margin-top:1px">⚑</span><div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">DFARS Flow-Down Gap</div><div style="font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--text-3);margin-top:1px">CeramicTech — §252.204-7012 not contractually flowed to sub-tier</div></div></div>
+        </div>
+        <div style="margin-top:6px;padding:5px 8px;background:rgba(252,165,165,0.03);border:1px solid rgba(252,165,165,0.08);border-radius:3px">
+          <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);margin-bottom:2px"><span>Enforcement risk score</span><span style="color:var(--red)">HIGH · 78/100</span></div>
+          <div style="height:3px;background:rgba(255,255,255,0.04);border-radius:2px;overflow:hidden"><div style="height:100%;width:78%;background:linear-gradient(90deg,var(--amber),var(--red));border-radius:2px"></div></div>
+        </div>
+        <button style="width:100%;padding:4px;margin-top:6px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(103,232,249,0.2)'" onmouseout="this.style.color='var(--text-3)';this.style.borderColor='rgba(103,232,249,0.1)'" onclick="executeAction('escalation-memo',{supplierId:'StellarMet_t',reason:'3 regulatory tripwires active - CMMC/DFARS/NIST',deadline:new Date(Date.now()+7*86400000).toISOString()})">Draft Escalation Memo →</button>
+      </div>
+    </div>
+    <!-- Program Schedule Entanglement -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Program Schedule Entanglement</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--amber);text-transform:uppercase;letter-spacing:0.06em">IMS · EVM</span></div>
+      <div class="lp-card-body" style="padding:10px 12px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em">DCMA corrective action risk · 3 programs</div>
+        <div style="background:rgba(252,165,165,0.05);border:1px solid rgba(252,165,165,0.12);border-radius:4px;padding:8px 10px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">F-35 Lot 17</span><span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--red)">CAR IMMINENT</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">StellarMet delay → 14 parts → 8 CLINs → $47M award fee at risk</div>
+        </div>
+        <div style="background:rgba(252,211,77,0.04);border:1px solid rgba(252,211,77,0.1);border-radius:4px;padding:8px 10px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">Artemis SLS</span><span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--amber)">WATCH</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">CeramicTech valve seat → 3 deliverables → DCMA EVM variance threshold</div>
+        </div>
+        <div style="background:rgba(52,211,153,0.03);border:1px solid rgba(52,211,153,0.08);border-radius:4px;padding:8px 10px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">Orion Capsule</span><span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--green)">NOMINAL</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">Bridge buy in place — 60d buffer · SPV = −0.02 · within threshold</div>
+        </div>
+        <div style="margin-top:6px;display:flex;gap:4px">
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--red)">$128M</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">At Risk Total</div></div>
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber)">3</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">CLINs Exposed</div></div>
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--cyan)">97%</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">IMS Coverage</div></div>
+        </div>
+        <button style="width:100%;padding:4px;margin-top:5px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(103,232,249,0.2)'" onmouseout="this.style.color='var(--text-3)';this.style.borderColor='rgba(103,232,249,0.1)'" onclick="document.getElementById('nlq-input').value='Show IMS entanglement map with all parts, CLINs, and programs at risk';nlqQueryLLM()">View IMS Entanglement Map →</button>
+      </div>
+    </div>
+    <!-- Collective Defense Intelligence -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Collective Defense Intel</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--green);text-transform:uppercase;letter-spacing:0.06em">Network</span></div>
+      <div class="lp-card-body" style="padding:10px 12px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em">Anonymized cross-customer signals · 14 primes</div>
+        <div style="background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.1);border-radius:4px;padding:8px 10px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">NanoAlloy Risk Flag</span><span style="font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--green)">3 peers see same</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">FOCI concern corroborated across 3 independent Primes via compartmentalized signal sharing</div>
+        </div>
+        <div style="background:rgba(252,211,77,0.03);border:1px solid rgba(252,211,77,0.08);border-radius:4px;padding:8px 10px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">Aerocast AS9100 Slip</span><span style="font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--amber)">2 peers flagged</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">Recert audit delay pattern — 2 primes report same supplier slipping 6-8 weeks</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:4px">
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--cyan)">76%</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase">Signal Coverage</div></div>
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--green)">12</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase">Active Signals</div></div>
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--cyan)">14</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase">Peers</div></div>
+        </div>
+        <button style="width:100%;padding:4px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(103,232,249,0.2)'" onmouseout="this.style.color='var(--text-3)';this.style.borderColor='rgba(103,232,249,0.1)'" onclick="executeAction('supplier-email',{supplierEmail:'defense-pool@dib-isc.org',subject:'Collective Defense Pool Join Request - AKSCI',body:'AKSCI requests membership in the DIB Supply Chain Defense Pool. CAGE codes: 7B4K2. POC: procurement@aksci.com.'})">Join Defense Pool →</button>
+      </div>
+    </div>
+    <!-- Causal Intelligence Feed -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Causal Intelligence</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">AI · Root Cause</span></div>
+      <div class="lp-card-body" style="padding:10px 12px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em">Latest inference · 4m ago</div>
+        <div style="background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-left:2px solid var(--cyan);border-radius:0 4px 4px 0;padding:8px 10px;margin-bottom:5px">
+          <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--cyan);margin-bottom:3px">Root Cause Identified</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:0.62rem;color:var(--text-1);line-height:1.5">Titanium bar stock shortage at StellarMet traces to Baoji smelter capacity reduction (−23%) following July energy directive</div>
+        </div>
+        <div style="background:rgba(252,211,77,0.03);border:1px solid rgba(252,211,77,0.08);border-left:2px solid var(--amber);border-radius:0 4px 4px 0;padding:8px 10px;margin-bottom:5px">
+          <div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--amber);margin-bottom:2px">Secondary Inference</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:0.58rem;color:var(--text-1);line-height:1.4">CeramicTech valve seat lead time linked to NanoAlloy cure profile change — shared autoclave dependency at sub-tier</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:6px">
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-1)">3</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.42rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px">2nd Order</div></div>
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--amber)">$128M</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.42rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px">At Risk</div></div>
+          <div style="flex:1;text-align:center;padding:4px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-1)">91%</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.42rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px">Confidence</div></div>
+        </div>
+        <button style="width:100%;padding:5px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(103,232,249,0.2)'" onmouseout="this.style.color='var(--text-3)';this.style.borderColor='rgba(103,232,249,0.1)'" onclick="document.getElementById('nlq-input').value='Show the full causal chain from Baoji smelter to affected programs';nlqQueryLLM()">View Full Causal Chain →</button>
+      </div>
+    </div>
+    <!-- Predictive & Prescriptive AI Engine -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Predictive AI Engine</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--cyan);text-transform:uppercase;letter-spacing:0.06em">Bayesian · RL</span></div>
+      <div class="lp-card-body" style="padding:8px 10px">
+        <div style="background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px;padding:8px 10px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">Dynamic Risk Propagation</span><span style="font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--cyan)">Bayesian Network</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.4">StellarMet failure probability: <strong style="color:var(--red)">68%</strong> → 12% within 72h if bridge buy placed. <span style="color:var(--green)">+$2.1M cost vs $47M penalty.</span></div>
+        </div>
+        <div style="background:rgba(52,211,153,0.03);border:1px solid rgba(52,211,153,0.08);border-radius:4px;padding:8px 10px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">Reinforcement Sourcing Agent</span><span style="font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--green)">Learning</span></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.4">Optimal allocation: AMETEK (60%) + QualiMet (40%) — projected 18% cost reduction, 94% on-time.</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:4px">
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--cyan)">12</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.38rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Active Models</div></div>
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--green)">94.2%</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.38rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Prediction Accuracy</div></div>
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--amber)">8</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.38rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Active Recs</div></div>
+        </div>
+        <div style="display:flex;gap:4px;justify-content:flex-end"><button class="explain-toggle" onclick="toggleExplain('explain-predictive')"><span style="font-size:0.5rem;line-height:1">&#9432;</span> Explain Recommendation</button></div>
+        <div class="explain-panel" id="explain-predictive">
+          <div class="explain-panel-inner">
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--text-1);margin-bottom:4px">Causal Chain: StellarMet Failure Risk</div>
+            <div class="explain-node"><span class="en-dot red"></span><span>Baoji smelter output reduced <strong style="color:var(--text-1)">23%</strong> (regulatory energy directive, July 2026)</span></div>
+            <div class="explain-node"><span class="en-dot red"></span><span>StellarMet Tier-2 processing <strong style="color:var(--text-1)">propagates</strong> through 3 intermediate nodes</span></div>
+            <div class="explain-node"><span class="en-dot amber"></span><span>14 parts across 3 programs now above <strong style="color:var(--text-1)">P(risk) &gt; 0.5</strong> threshold</span></div>
+            <div class="explain-node"><span class="en-dot red"></span><span>F-35 Ti Casting (PN 47821-B): qualification window closes <strong style="color:var(--text-1)">12 days</strong></span></div>
+            <div class="explain-node"><span class="en-dot green"></span><span>Bridge buy via AMETEK reduces probability to <strong style="color:var(--text-1)">P=0.12</strong> within 72h</span></div>
+            <div class="explain-source">
+              <span style="color:var(--cyan)">&#9673;</span><span>SPIRE telemetry 2026-06-27</span>
+              <span style="color:var(--cyan)">&#9673;</span><span>D&B financials updated 2026-06-25</span>
+              <span style="color:var(--cyan)">&#9673;</span><span>3 peer signals (Titanium Working Group)</span>
+              <span style="color:var(--cyan)">&#9673;</span><span>Confidence: 91%</span>
+            </div>
+            <div class="explain-summary"><strong>Sensitivity:</strong> If lead time increases 2 more weeks, P(failure) rises to <strong>0.34</strong> even with bridge buy — recommended trigger: initiate AMETEK qual within 48h.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Real-Time Supplier Telemetry -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Supplier Telemetry</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--green);text-transform:uppercase;letter-spacing:0.06em">IoT · Satellite</span></div>
+      <div class="lp-card-body" style="padding:8px 10px">
+        <div style="background:rgba(52,211,153,0.03);border:1px solid rgba(52,211,153,0.08);border-radius:4px;padding:6px 8px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--text-1);margin-bottom:2px">StellarMet Foundry</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.5">OEE: <strong style="color:var(--amber)">72%</strong> · Scrap rate: <strong style="color:var(--amber)">+3.2%</strong> · Machine utilization trending down 6% MoM · <span style="color:var(--cyan)">Satellite: lot density −22%</span></div>
+        </div>
+        <div style="background:rgba(252,165,165,0.03);border:1px solid rgba(252,165,165,0.08);border-radius:4px;padding:6px 8px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--text-1);margin-bottom:2px">Rotterdam Port — AIS Tracking</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.5">Vessel delay: +8d · Congestion index: <strong style="color:var(--red)">HIGH</strong> · 3 Tier-2 shipments affected · ETA: +11d</div>
+        </div>
+        <div style="background:rgba(252,211,77,0.03);border:1px solid rgba(252,211,77,0.06);border-radius:4px;padding:6px 8px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--text-1);margin-bottom:2px">Baoji Smelter — Geospatial</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.5">Thermal signature −23% vs baseline · Production slowdown confirmed · <span style="color:var(--cyan)">Next pass: 48h</span></div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:0"><button class="explain-toggle" onclick="toggleExplain('explain-telemetry')"><span style="font-size:0.5rem;line-height:1">&#9432;</span> Explain Anomalies</button><button style="flex:1;padding:4px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.5rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(103,232,249,0.2)'" onmouseout="this.style.color='var(--text-3)';this.style.borderColor='rgba(103,232,249,0.1)'" onclick="notify('Supplier Telemetry Dashboard: 14 connected sites · 6 IoT streams · 3 satellite passes/day','info')">View Telemetry Dashboard →</button></div>
+        <div class="explain-panel" id="explain-telemetry">
+          <div class="explain-panel-inner">
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--text-1);margin-bottom:4px">Anomaly Analysis: 3 concurrent signals</div>
+            <div class="explain-node"><span class="en-dot red"></span><span>StellarMet OEE <strong style="color:var(--text-1)">72%</strong> — below 80% threshold for 8 consecutive days. Correlated with scrap rate spike +3.2%.</span></div>
+            <div class="explain-node"><span class="en-dot red"></span><span>Rotterdam AIS shows 11 vessels at anchor (vs 5 normal). Congestion index <strong style="color:var(--text-1)">HIGH</strong> — affects 3 Tier-2 shipments containing StellarMet feedstock.</span></div>
+            <div class="explain-node"><span class="en-dot amber"></span><span>Baoji thermal signature <strong style="color:var(--text-1)">-23%</strong> vs baseline. Satellite imagery confirms 2 of 4 furnaces offline. Next pass in 48h for confirmation.</span></div>
+            <div class="explain-source">
+              <span style="color:var(--cyan)">&#9673;</span><span>MES OEE feed</span>
+              <span style="color:var(--cyan)">&#9673;</span><span>AIS MarineTraffic API</span>
+              <span style="color:var(--cyan)">&#9673;</span><span>Satellogic 0.5m multispectral</span>
+              <span style="color:var(--cyan)">&#9673;</span><span>Confidence: 87%</span>
+            </div>
+            <div class="explain-summary"><strong>Correlation:</strong> All 3 signals converge on the same root cause — Baoji upstream reduction propagating through logistics and production. <strong>Mitigation:</strong> Activating AMETEK bridge buy accelerates timeline by +6wks.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Regulatory Change Intelligence -->
+    <div class="lp-card">
+      <div class="lp-card-header"><span class="lp-card-title">Regulatory Change Intel</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--amber);text-transform:uppercase;letter-spacing:0.06em">LLM · LIVE</span></div>
+      <div class="lp-card-body" style="padding:8px 10px">
+        <div style="background:rgba(252,165,165,0.04);border:1px solid rgba(252,165,165,0.1);border-radius:4px;padding:6px 8px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--text-1);margin-bottom:2px">CMMC 2.0 Level 2 Update — 14 CFR §170.23</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.5">New scope requirements affect 6 suppliers with CAGE codes A, B, C, D, E, F. <span style="color:var(--red)">18 active contracts need attestation within 90 days.</span></div>
+        </div>
+        <div style="background:rgba(252,211,77,0.03);border:1px solid rgba(252,211,77,0.08);border-radius:4px;padding:6px 8px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--text-1);margin-bottom:2px">DFARS 252.204-7012 Flow-Down</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.5">4 suppliers missing required clause — auto-generate amendment packages? <span style="color:var(--cyan)">Compliance plan ready.</span></div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:0">
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--amber)">6</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.38rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Regs Monitored</div></div>
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--red)">2</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.38rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Affecting You</div></div>
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--cyan)">90d</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.38rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Compliance Window</div></div>
+        </div>
+        <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px"><button class="explain-toggle" onclick="toggleExplain('explain-reg')"><span style="font-size:0.5rem;line-height:1">&#9432;</span> Explain Regulatory Impact</button></div>
+        <div class="explain-panel" id="explain-reg">
+          <div class="explain-panel-inner">
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--text-1);margin-bottom:4px">Regulatory Impact Assessment</div>
+            <div class="explain-node"><span class="en-dot red"></span><span>CMMC 2.0 L2 — <strong style="color:var(--text-1)">6 suppliers</strong> must achieve certification within 90 days. Non-compliance triggers contract termination clause 52.204-21.</span></div>
+            <div class="explain-node"><span class="en-dot amber"></span><span>DFARS 252.204-7012 — <strong style="color:var(--text-1)">4 suppliers</strong> missing NIST SP 800-171 flow-down. Auto-generating amendment packages.</span></div>
+            <div class="explain-node"><span class="en-dot green"></span><span>ITAR/EAR re-class — pending review for QualiMet (FOCI concern). Decision expected <strong style="color:var(--text-1)">2026-08-01</strong>.</span></div>
+            <div class="explain-source">
+              <span style="color:var(--cyan)">&#9673;</span><span>Federal Register 2026-06-25</span>
+              <span style="color:var(--cyan)">&#9673;</span><span>LLM-parsed 14 CFR / DFARS</span>
+              <span style="color:var(--cyan)">&#9673;</span><span>88% semantic match confidence</span>
+            </div>
+            <div class="explain-summary"><strong>Risk:</strong> Total non-compliance exposure: $12.4M in potential penalties. <strong>Recommendation:</strong> Escalate CMMC attestation to PMO and initiate supplier outreach within 7 days.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ===== Exo-Sensor / Response Agent / Forecast moved to Intel Strip ===== -->
+  </div>
+
+  <!-- GRAPH PANEL -->
+  <div class="graph-panel" id="graph-panel">
+    <svg id="graph-svg"></svg>
+    <div class="graph-flash" id="sim-flash"></div>
+    <canvas class="particle-canvas" id="particle-canvas"></canvas>
+    <div class="graph-toolbar">
+      <button id="tb-zoomin" title="Zoom in">+</button>
+      <button id="tb-zoomout" title="Zoom out">−</button>
+      <button id="tb-reset" title="Reset view">⟐</button>
+      <button id="tb-fit" title="Fit graph">⇱</button>
+      <button id="tb-labels" title="Toggle labels" class="active">Ab</button>
+      <button id="tb-tiers" title="Toggle tiers">⊞</button>
+      <hr>
+      <button id="tb-heatmap" title="Toggle heatmap">◉</button>
+      <button id="tb-cert" title="Toggle cert mode">✓</button>
+      <button id="tb-3d" title="Toggle 3D">◈</button>
+      <button id="tb-geo" title="Toggle geo map">🌐</button>
+    </div>
+    <div class="graph-tooltip" id="graph-tooltip">
+      <div class="tt-name"></div>
+      <div class="tt-status"></div>
+      <div class="tt-stat-label"></div>
+      <div class="tt-row"><span class="tt-label"></span><span class="tt-val"></span></div>
+    </div>
+
+    <div class="minimap" id="minimap"><svg id="minimap-svg"></svg></div>
+    <div id="ticker-container"></div>
+    <div class="sourcing-popup" id="sourcing-popup"></div>
+    <div id="ai-status-chip" style="position:absolute;top:12px;left:12px;z-index:10;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(6,10,20,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(103,232,249,0.15);border-radius:5px;font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase;pointer-events:none"><span style="width:5px;height:5px;border-radius:50%;background:var(--cyan);flex-shrink:0;box-shadow:0 0 6px rgba(103,232,249,0.5);animation:pulse-dot 2s infinite"></span> Morningstar AI · Analyzing 62 nodes</div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel" id="right-panel-data">
+
+    <!-- ACTION: Disruption Simulation -->
+    <div class="rp-card">
+      <div class="rp-card-title">Disruption Simulation</div>
+      <div class="sim-status" id="sim-status">Select a node on the graph to simulate its failure.</div>
+      <div class="sim-callout" style="display:none" id="sim-callout">
+        <div class="sim-callout-name" id="sim-callout-name"></div>
+        <div class="sim-callout-risk" id="sim-callout-risk"></div>
+      </div>
+      <button class="btn-simulate" id="btn-simulate">▶ Simulate Failure</button>
+      <button class="btn-secondary" id="btn-compare" style="display:none">⇄ Compare Scenario</button>
+      <button class="btn-secondary" id="btn-clear-sim" style="display:none">✕ Clear Simulation</button>
+      <div class="cascade-counter" id="cascade-counter" style="display:none">
+        <span>Affected: <strong id="cc-nodes">0</strong> nodes</span>
+        <span>Revenue: <strong id="cc-revenue">$0</strong></span>
+      </div>
+      <div id="sim-result" style="display:none"></div>
+      <div id="gantt-overlay" style="display:none" class="gantt-overlay"></div>
+    </div>
+
+    <!-- ACTION: Revenue Impact Calculator -->
+    <div class="rp-card">
+      <div class="rp-card-title">Revenue Impact Calculator</div>
+      <select id="ric-program" style="width:100%;padding:4px 6px;margin-bottom:6px;background:var(--bg-dark);border:1px solid var(--border-1);border-radius:4px;color:var(--text-1);font-family:var(--font-mono);font-size:0.6rem">
+        <option value="">— Select program —</option>
+        <option value="Artemis Program_t">Artemis Program</option>
+        <option value="Orion Capsule_t">Orion Capsule</option>
+      </select>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+        <input type="range" id="ric-slider" min="0" max="365" value="90" style="flex:1">
+        <span id="ric-days-display" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--cyan);min-width:50px">90d</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-2)">
+        <span>Revenue at Risk:</span>
+        <strong id="ric-value" style="color:var(--red)">$0</strong>
+      </div>
+      <div id="ric-bar" style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:4px;overflow:hidden">
+        <div style="height:100%;width:45%;background:var(--red);border-radius:2px"></div>
+      </div>
+    </div>
+
+    <!-- ACTION: Blast Radius Calculator -->
+    <div class="rp-card">
+      <div class="rp-card-title">Blast Radius Calculator</div>
+      <div style="padding:10px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px">SELECT DISRUPTION SCENARIO</div>
+        <select style="width:100%;padding:4px 8px;background:var(--bg-dark);border:1px solid var(--border-1);border-radius:4px;color:var(--text-1);font-family:'DM Mono',monospace;font-size:0.58rem;margin-bottom:8px" onchange="notify('Blast radius computed for '+this.options[this.selectedIndex].text,'info')"><option>— Choose supplier node —</option><option>StellarMet (Ti-6Al-4V bar stock)</option><option>NanoAlloy Ltd (composite structures)</option><option>CeramicTech (valve seats)</option></select>
+        <div style="background:rgba(252,165,165,0.05);border:1px solid rgba(252,165,165,0.12);border-radius:5px;padding:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+            <div style="text-align:center;padding:6px;background:rgba(0,0,0,0.2);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.9rem;color:var(--red);font-weight:500">14</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.44rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-3);margin-top:2px">Parts Affected</div></div>
+            <div style="text-align:center;padding:6px;background:rgba(0,0,0,0.2);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.9rem;color:var(--amber);font-weight:500">3</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.44rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-3);margin-top:2px">Programs</div></div>
+            <div style="text-align:center;padding:6px;background:rgba(0,0,0,0.2);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.9rem;color:var(--red);font-weight:500">$247M</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.44rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-3);margin-top:2px">Revenue at Risk</div></div>
+            <div style="text-align:center;padding:6px;background:rgba(0,0,0,0.2);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.9rem;color:var(--amber);font-weight:500">127d</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.44rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-3);margin-top:2px">To Recovery</div></div>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--text-3);text-align:center">AI-computed · Confidence 87% · Based on 14-node causal trace</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTION: Time-to-Recovery Simulator -->
+    <div class="rp-card">
+      <div class="rp-card-title">Time-to-Recovery Simulator</div>
+      <div style="padding:10px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px">DECISION TREE · FAI HOLD POINTS · BURDENED COST</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="padding:7px 8px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.12);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='rgba(103,232,249,0.25)'" onmouseout="this.style.borderColor='rgba(103,232,249,0.12)'" onclick="notify('Expedited Qualification: 94d · $2.4M · Medium risk · FAI required','info')"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.62rem;font-weight:600;color:var(--text-1)">Expedited Qualification</span><span style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--cyan)">94d</span></div><div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);margin-top:2px">Cost: $2.4M · Risk: Medium · FAI hold point at 47d</div></div>
+          <div style="padding:7px 8px;background:rgba(252,211,77,0.04);border:1px solid rgba(252,211,77,0.1);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='rgba(252,211,77,0.22)'" onmouseout="this.style.borderColor='rgba(252,211,77,0.1)'" onclick="executeAction('bridge-buy',{partId:'AS-9100-447',supplier:'AMETEK',quantity:500,urgency:'critical'})"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.62rem;font-weight:600;color:var(--text-1)">Bridge Buy (Broker)</span><span style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--amber)">22d</span></div><div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);margin-top:2px">Cost: $890K premium · Risk: Traceability gap · CustSource approval 14d</div></div>
+          <div style="padding:7px 8px;background:rgba(252,165,165,0.04);border:1px solid rgba(252,165,165,0.1);border-radius:4px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='rgba(252,165,165,0.2)'" onmouseout="this.style.borderColor='rgba(252,165,165,0.1)'" onclick="notify('Schedule Slip: 127d+ · $47M CDRL penalty · Award fee at risk','error')"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.62rem;font-weight:600;color:var(--text-1)">Schedule Slip</span><span style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--red)">127d+</span></div><div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);margin-top:2px">Cost: $47M CDRL penalty · Award fee at risk · DCMA CAR</div></div>
+        </div>
+        <div style="margin-top:8px;padding:6px 8px;background:rgba(103,232,249,0.03);border:1px dashed rgba(103,232,249,0.1);border-radius:4px;font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--text-3);text-align:center">AI RECOMMENDATION: Initiate expedited qualification now while placing 60-day bridge buy as insurance</div>
+      </div>
+    </div>
+
+    <!-- ACTION: Emergency Action Plan -->
+    <div class="rp-card">
+      <div class="rp-card-title">Emergency Action Plan</div>
+      <div id="action-plan-container">
+        <div class="action-plan-section">
+          <div class="action-plan-item"><span class="api-label">Step 1</span><span class="api-detail">Identify alternate supplier for Titanium Casting</span><button class="api-assign-btn" style="margin-left:auto" onclick="executeAction('bridge-buy',{partId:'Titanium Casting_t',supplier:'AMETEK',quantity:200,urgency:'high'})">Assign</button></div>
+          <div class="action-plan-item"><span class="api-label">Step 2</span><span class="api-detail">Expedite AS9100 re-cert for CeramicTech</span><button class="api-assign-btn" style="margin-left:auto" onclick="executeAction('update-ims',{partId:'CeramicTech_t',status:'AS9100_RECERT_PENDING',notes:'Expedite re-cert - Nadcap NDT expiring'})">Assign</button></div>
+          <div class="action-plan-item"><span class="api-label">Step 3</span><span class="api-detail">Initiate bridge buy for Valve Group</span><button class="api-assign-btn" style="margin-left:auto" onclick="executeAction('bridge-buy',{partId:'Valve Group_t',supplier:'FluidLogic',quantity:150,urgency:'critical'})">Assign</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTION: Macro Hedge Recommendations -->
+    <div class="rp-card" id="macro-rec-card">
+      <div class="rp-card-title">Macro Hedge Recommendations</div>
+      <div style="padding:6px 10px 10px" id="macro-rec-container">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:0.52rem;color:var(--text-3);text-align:center;padding:8px">Loading recommendations...</div>
+      </div>
+    </div>
+
+    <!-- ACTION: Sourcing Consolidation + Coop Procurement -->
+    <div class="rp-card" id="consolidation-card">
+      <div class="rp-card-title">Sourcing Consolidation</div>
+      <div style="padding:6px 10px 10px">
+        <div class="cc-detail" style="font-size:0.6rem;color:var(--text-2);margin-bottom:6px">3 suppliers share identical certifications — potential 18% cost reduction through consolidation.</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--text-3)">Coop Pool:</span>
+          <span class="coop-count" style="font-size:0.9rem">5</span>
+          <button class="coop-request-btn" id="coop-btn" style="font-size:0.48rem" onclick="executeAction('supplier-email',{supplierEmail:'peers@procurement-coop.org',subject:'Cooperative Procurement Request - Titanium Casting',body:'Requesting joint procurement for Ti-6Al-4V Casting (PN AS-9100-447). Urgency: Critical. Estimated qty: 500 units.'})">+ Request</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTION: Export -->
+    <div class="rp-card">
+      <div class="rp-card-title">Export</div>
+      <div style="display:flex;gap:4px;padding:6px 8px">
+        <button class="btn-ghost export-highlight" id="btn-export-report" style="flex:1;margin:0" onclick="fetch(apiUrl('/api/nlq'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:'Generate comprehensive risk report for all suppliers and programs'})}).then(function(r){return r.json();}).then(function(d){notify('Risk Report generated — '+(d.nodeCount||0)+' nodes analyzed','success');})">📄 Risk Report</button>
+        <button class="btn-ghost" id="btn-board-deck" style="flex:1;margin:0" onclick="fetch(apiUrl('/api/nlq'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:'Executive summary of top 10 supply chain risks with mitigation recommendations'})}).then(function(r){return r.json();}).then(function(d){notify('Board Deck generated — '+(d.confidence||0)+'% confidence analysis','success');})">📊 Board Deck</button>
+      </div>
+    </div>
+
+    <!-- ACTION: Autonomous Qualification Orchestration -->
+    <div class="rp-card">
+      <div class="rp-card-title">Qualification Orchestration</div>
+      <div style="padding:10px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px">FAIR · PPAP · AS9100 AUDIT · WORKFLOW</div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:6px">
+          <div style="display:grid;grid-template-columns:1fr 50px;gap:4px;padding:5px 6px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:3px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;color:var(--text-1)">Ti-6Al-4V Alternate Qual</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--amber);text-align:right">FAIR-001</span></div>
+          <div style="display:grid;grid-template-columns:1fr 50px;gap:4px;padding:5px 6px;background:rgba(52,211,153,0.03);border:1px solid rgba(52,211,153,0.08);border-radius:3px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;color:var(--text-1)">CeramicTech AS9100 Recert</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--green);text-align:right">PPAP-884</span></div>
+          <div style="display:grid;grid-template-columns:1fr 50px;gap:4px;padding:5px 6px;background:rgba(252,211,77,0.03);border:1px solid rgba(252,211,77,0.08);border-radius:3px"><span style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;color:var(--text-1)">AMETEK Bridge Qual</span><span style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--amber);text-align:right">NEW</span></div>
+        </div>
+        <div style="background:rgba(103,232,249,0.03);border:1px dashed rgba(103,232,249,0.1);border-radius:4px;padding:6px 8px;margin-bottom:5px;font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3)">
+          <span style="color:var(--cyan)">AI:</span> 3 docs auto-extracted from BOM/PLM · 2 forms pre-filled · routing: 5 approvers · ETA: <strong style="color:var(--text-1)">12d</strong>
+        </div>
+        <div style="display:flex;gap:4px">
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--cyan)">3</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase">Active</div></div>
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--green)">12</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase">Completed</div></div>
+          <button style="flex:1;padding:4px;background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.15);border-radius:3px;font-family:'Space Grotesk',sans-serif;font-size:0.48rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cyan);cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='rgba(103,232,249,0.1)'" onmouseout="this.style.background='rgba(103,232,249,0.06)'" onclick="executeAction('update-ims',{partId:'Ti-6Al-4V Casting',status:'QUAL_WORKFLOW_LAUNCHED',notes:'3 items, 5 approvers, 12d ETA - AI auto-extracted from BOM/PLM'})">New Workflow</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTION: Digital Twin Simulator -->
+    <div class="rp-card">
+      <div class="rp-card-title">Digital Twin Simulator</div>
+      <div style="padding:10px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px">MULTI-ECHELON · STRESS TEST · OPTIMIZATION</div>
+        <div style="background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px;padding:8px;margin-bottom:5px">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1);margin-bottom:4px">Scenario: Simultaneous Disruption</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);line-height:1.5">Pandemic + Cyberattack + Supplier Bankruptcy — modeled across 62 nodes, 14 programs</div>
+          <div style="margin-top:5px;height:3px;background:rgba(255,255,255,0.04);border-radius:2px;overflow:hidden"><div style="height:100%;width:34%;background:linear-gradient(90deg,var(--red),var(--amber));border-radius:2px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3);margin-top:2px"><span>Resilience score under stress</span><span style="color:var(--amber)">34/100 · Severe</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px">
+          <div style="text-align:center;padding:5px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--red)">$247M</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">At Risk</div></div>
+          <div style="text-align:center;padding:5px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--cyan)">127d</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">To Recovery</div></div>
+          <div style="text-align:center;padding:5px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--green)">92%</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Optimization Confidence</div></div>
+          <div style="text-align:center;padding:5px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--cyan)">3</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em">Scenarios</div></div>
+        </div>
+        <button style="width:100%;padding:5px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.55rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);cursor:pointer;transition:all 0.15s" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(103,232,249,0.2)'" onmouseout="this.style.color='var(--text-3)';this.style.borderColor='rgba(103,232,249,0.1)'" onclick="runSimulation('StellarMet_t',0.85,30)">Run Full Simulation →</button>
+        <div style="margin-top:5px;font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3);text-align:center" id="sim-status">Last simulated: 14m ago · <span style="color:var(--cyan)">6 scenarios queued</span></div>
+      </div>
+    </div>
+
+    <!-- ACTION: Joint Mitigation (Collaborative Defense) -->
+    <div class="rp-card">
+      <div class="rp-card-title">Joint Mitigation Pool</div>
+      <div style="padding:10px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.52rem;color:var(--text-3);margin-bottom:6px">CROSS-PRIME CO-INVEST · BUFFER STOCK · GOVERNANCE</div>
+        <div style="background:rgba(52,211,153,0.03);border:1px solid rgba(52,211,153,0.08);border-radius:4px;padding:7px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;font-family:'Space Grotesk',sans-serif;font-size:0.58rem;font-weight:600;color:var(--text-1);margin-bottom:2px">Ti-6Al-4V Buffer Pool</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">3 primes co-investing · <strong style="color:var(--green)">$4.2M pooled</strong> · 2,400 units reserved · 60d buffer established</div>
+          <div style="height:3px;background:rgba(255,255,255,0.04);border-radius:2px;margin-top:4px;overflow:hidden"><div style="height:100%;width:72%;background:var(--green);border-radius:2px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3);margin-top:2px"><span>Pool utilization</span><span style="color:var(--green)">72% filled</span></div>
+        </div>
+        <div style="background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px;padding:7px;margin-bottom:5px">
+          <div style="display:flex;justify-content:space-between;font-family:'Space Grotesk',sans-serif;font-size:0.58rem;font-weight:600;color:var(--text-1);margin-bottom:2px">Active Co-Invest Proposals</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">2 open: Composite Pre-Preg buffer ($1.8M) · NDT shared qualification ($680K)</div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--cyan)">14</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase">Pool Members</div></div>
+          <div style="flex:1;text-align:center;padding:3px;background:rgba(255,255,255,0.02);border:1px solid var(--border-0);border-radius:3px"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--green)">$6.8M</div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.4rem;color:var(--text-3);text-transform:uppercase">Pool Value</div></div>
+          <button style="flex:1;padding:4px;background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.15);border-radius:3px;font-family:'Space Grotesk',sans-serif;font-size:0.48rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--cyan);cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='rgba(103,232,249,0.1)'" onmouseout="this.style.background='rgba(103,232,249,0.06)'" onclick="notify('Joint mitigation proposal submitted to 14 pool members','success')">Propose Action</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- end app-layout -->
+
+<div class="intel-strip">
+  <div class="intel-strip-inner">
+    <div class="intel-strip-track">
+      <span class="strip-tag">⬡ LIVE INTELLIGENCE</span>
+      <div class="strip-sep"></div>
+      <span class="strip-signal critical"><span class="sig-dot"></span>StellarMet Ti-6Al-4V delivery CRITICAL — 12d to inflection</span>
+      <span class="strip-signal warning"><span class="sig-dot"></span>Rotterdam congestion +8d — 3 European Tier-2 suppliers</span>
+      <span class="strip-signal warning"><span class="sig-dot"></span>Baoji smelter −23% — StellarMet upstream unknown secondary</span>
+      <span class="strip-signal nominal"><span class="sig-dot"></span>NTSB bulletin — NanoAlloy cure profile +3d per cycle</span>
+      <span class="strip-signal warning"><span class="sig-dot"></span>Raytheon flagged sole-source titanium risk on earnings call</span>
+      <span class="strip-signal nominal"><span class="sig-dot"></span>Aerocast AS9100 recert — on track, 12% elapsed</span>
+      <div class="strip-sep"></div>
+      <span style="font-family:'DM Mono',monospace;font-size:0.42rem;color:var(--text-3);white-space:nowrap;flex-shrink:0">DATA: SPIRE · SEDAR · D&B · OSINT · <span id="provenance-refresh">2026-06-27 09:14Z</span></span>
+      <!-- duplicate for seamless ticker loop -->
+      <span class="strip-tag">⬡ LIVE INTELLIGENCE</span>
+      <div class="strip-sep"></div>
+      <span class="strip-signal critical"><span class="sig-dot"></span>StellarMet Ti-6Al-4V delivery CRITICAL — 12d to inflection</span>
+      <span class="strip-signal warning"><span class="sig-dot"></span>Rotterdam congestion +8d — 3 European Tier-2 suppliers</span>
+      <span class="strip-signal warning"><span class="sig-dot"></span>Baoji smelter −23% — StellarMet upstream unknown secondary</span>
+      <span class="strip-signal nominal"><span class="sig-dot"></span>NTSB bulletin — NanoAlloy cure profile +3d per cycle</span>
+      <span class="strip-signal warning"><span class="sig-dot"></span>Raytheon flagged sole-source titanium risk on earnings call</span>
+      <span class="strip-signal nominal"><span class="sig-dot"></span>Aerocast AS9100 recert — on track, 12% elapsed</span>
+      <div class="strip-sep"></div>
+      <span style="font-family:'DM Mono',monospace;font-size:0.42rem;color:var(--text-3);white-space:nowrap;flex-shrink:0">DATA: SPIRE · SEDAR · D&B · OSINT · <span id="provenance-refresh">2026-06-27 09:14Z</span></span>
+    </div>
+  </div>
+</div>
+<div class="data-provenance-bar" style="height:18px;background:rgba(0,0,0,0.2);border-top:1px solid rgba(103,232,249,0.04);display:flex;align-items:center;justify-content:center;gap:20px;font-family:'DM Mono',monospace;font-size:0.4rem;color:var(--text-3);letter-spacing:0.06em;flex-shrink:0;user-select:none">
+  <span>DATA SOURCES: SPIRE.GOV · SAM.GOV · SEDAR · DUN &amp; BRADSTREET · SEC EDGAR · OSINT</span>
+  <span style="color:var(--border-2)">|</span>
+  <span>DATA LAG: &lt; 4 HOURS</span>
+</div>
+</main>
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-build-report">
+  <div class="modal">
+    <div class="modal-header-section"><h3>Build Readiness Report</h3><button class="modal-close" onclick="closeModal('modal-build-report')">✕</button></div>
+    <div class="modal-body-section">
+      <div id="br-title" style="font-family:var(--font-heading);font-weight:700;font-size:1rem;margin-bottom:4px"></div>
+      <div id="br-subtitle" style="font-size:0.65rem;color:var(--text-2);margin-bottom:8px"></div>
+      <div id="br-verdict" style="padding:8px;border-radius:4px;font-size:0.7rem;margin-bottom:8px"></div>
+      <div style="display:flex;gap:12px;margin-bottom:8px;font-size:0.6rem"><span>Score: <strong id="br-score">—</strong></span></div>
+      <div id="br-blocking" style="margin-bottom:8px"></div>
+      <div id="br-expiring" style="margin-bottom:8px"></div>
+      <div id="br-summary" style="font-size:0.65rem;color:var(--text-2)"></div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost" onclick="closeModal('modal-build-report')">Close</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-simulation">
+  <div class="modal">
+    <div class="modal-header-section"><h3>Simulation Report</h3><button class="modal-close" onclick="closeModal('modal-simulation')">✕</button></div>
+    <div class="modal-body-section">
+      <div id="sim-report-desc" style="font-size:0.75rem;color:var(--text-2);margin-bottom:8px"></div>
+      <div id="sim-report-details" style="font-size:0.65rem"></div>
+      <div id="modal-sim-content"></div>
+    </div>
+    <div class="modal-footer-section">
+      <button class="btn-ghost" id="btn-sim-failure" style="color:var(--red);border-color:rgba(252,165,165,0.3)">▶ Simulate</button>
+      <button class="btn-ghost" onclick="closeModal('modal-simulation')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-resilience">
+  <div class="modal">
+    <div class="modal-header-section"><h3>Resilience Score Breakdown</h3><button class="modal-close" onclick="closeModal('modal-resilience')">✕</button></div>
+    <div class="modal-body-section">
+      <div id="modal-penalties"></div>
+      <div id="modal-bonuses"></div>
+      <div id="modal-suggestions"></div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost" onclick="closeModal('modal-resilience')">Close</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-supplier-profile">
+  <div class="modal">
+    <div class="modal-header-section"><h3>Supplier Profile</h3><button class="modal-close" onclick="closeModal('modal-supplier-profile')">✕</button></div>
+    <div class="modal-body-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div><span id="sp-name" style="font-family:var(--font-heading);font-weight:700;font-size:1rem"></span><span id="sp-star" class="watchlist-star">☆</span></div>
+        <span id="sp-risk-badge" style="padding:2px 10px;border-radius:4px;font-size:0.6rem;font-family:var(--font-mono)"></span>
+      </div>
+      <div id="sp-subtitle" style="font-size:0.65rem;color:var(--text-2);margin-bottom:8px"></div>
+      <div id="sp-badges" style="margin-bottom:8px"></div>
+      <div id="sp-sparkline-wrap"><svg id="sp-sparkline" width="100%" height="40"></svg></div>
+      <div id="sp-financial" style="margin-bottom:8px"></div>
+      <div id="sp-audit" style="margin-bottom:8px"></div>
+      <div id="sp-risk-flags" style="margin-bottom:8px"></div>
+      <div id="sp-prevetted" style="display:none;padding:6px;background:rgba(110,231,183,0.08);border:1px solid rgba(110,231,183,0.15);border-radius:4px;font-size:0.6rem;color:var(--green)">✓ Pre-vetted supplier</div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost" onclick="closeModal('modal-supplier-profile')">Close</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-scenario-compare">
+  <div class="modal">
+    <div class="modal-header-section"><h3>Scenario Comparison</h3><button class="modal-close" onclick="closeModal('modal-scenario-compare')">✕</button></div>
+    <div class="modal-body-section">
+      <div style="display:flex;gap:12px;margin-bottom:8px">
+        <div style="flex:1"><div id="comp-left-label" style="font-size:0.65rem;color:var(--text-2);margin-bottom:4px">Current</div><div id="comp-left-detail" style="font-size:0.7rem"></div></div>
+        <div style="flex:1"><select id="comp-right-select" style="width:100%;padding:4px 6px;background:var(--bg-dark);border:1px solid var(--border-1);border-radius:4px;color:var(--text-1);font-size:0.6rem"></select></div>
+      </div>
+      <div id="comp-results" style="font-size:0.65rem;color:var(--text-2)"></div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost" onclick="closeModal('modal-scenario-compare')">Close</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-ai-narrative">
+  <div class="modal">
+    <div class="modal-header-section"><h3>AI Supply Chain Narrative</h3><button class="modal-close" onclick="closeModal('modal-ai-narrative')">✕</button></div>
+    <div class="modal-body-section">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border-0)">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(103,232,249,0.1);border:1px solid rgba(103,232,249,0.2);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--cyan);flex-shrink:0">∗</div>
+        <div><div style="font-family:'Space Grotesk',sans-serif;font-size:0.7rem;font-weight:600;color:var(--text-1)">Morningstar AI · Supply Chain Narrative</div><div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">Generated 2026-06-27 09:14Z · Confidence 91% · 14-node analysis</div></div>
+      </div>
+      <div class="ai-narrative-content" id="ai-narrative-body" style="font-family:'Space Grotesk',sans-serif;font-size:0.68rem;line-height:1.7;color:var(--text-2)">The primary risk vector is a titanium bar stock shortage originating at StellarMet's Tier-3 smelting partner in Baoji, China. A regulatory energy-capacity directive issued in July reduced output by an estimated 23%, propagating upstream through 3 Tier-2 processing nodes before reaching 14 parts across 3 programs.
+
+The F-35 Titanium Casting (PN 47821-B) is the highest-urgency item: its qualification window closes in 12 days, after which no re-qualification of an alternate supplier is possible within the current IMS without triggering a Corrective Action Request from DCMA.</div>
+      <div id="ai-narrative-result" style="margin-top:10px;padding:8px 10px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-left:2px solid var(--cyan);border-radius:0 4px 4px 0;font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--text-2)"><span style="color:var(--cyan);font-weight:600">AI RECOMMENDATION:</span> Initiate source qualification for alternate Ti-6Al-4V supplier within 48 hours. Simultaneously place bridge buy order through AMETEK Specialty Metals to cover 90-day exposure window. Estimated combined cost: $3.1M vs. $47M CDRL penalty exposure.</div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost" onclick="closeModal('modal-ai-narrative')">Close</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-shortcuts" style="z-index:2000">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header-section"><h3>Keyboard Shortcuts</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body-section" style="font-size:0.65rem">
+      <div style="display:flex;justify-content:space-between;padding:4px 0"><kbd style="padding:2px 6px;background:var(--surface-2);border-radius:3px">⌘K</kbd><span>Search</span></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0"><kbd style="padding:2px 6px;background:var(--surface-2);border-radius:3px">ESC</kbd><span>Deselect / Close</span></div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost">Close</button></div>
+  </div>
+</div>
+
+<!-- Pricing / Deployment Modal -->
+<div class="modal-overlay" id="modal-pricing">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header-section"><h3>Deployment &amp; Pricing</h3><button class="modal-close" onclick="closeModal('modal-pricing')">✕</button></div>
+    <div class="modal-body-section">
+      <div style="margin-bottom:12px">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:0.75rem;font-weight:600;color:var(--text-1);margin-bottom:4px">AKSCI Qualification Debt Intelligence</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3)">Enterprise SaaS · FedRAMP Authorized</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+        <div style="padding:8px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:5px;text-align:center"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;font-weight:700;color:var(--cyan)">SILVER</div><div style="font-family:'DM Mono',monospace;font-size:0.65rem;font-weight:700;color:var(--text-1);margin:4px 0">$180K/yr</div><div style="font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3)">Up to 5 programs · 2 users</div></div>
+        <div style="padding:8px;background:rgba(103,232,249,0.08);border:1px solid rgba(103,232,249,0.2);border-radius:5px;text-align:center;box-shadow:0 0 8px rgba(103,232,249,0.06)"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;font-weight:700;color:var(--cyan)">GOLD</div><div style="font-family:'DM Mono',monospace;font-size:0.65rem;font-weight:700;color:var(--text-1);margin:4px 0">$480K/yr</div><div style="font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3)">Up to 20 programs · 10 users</div></div>
+        <div style="padding:8px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:5px;text-align:center"><div style="font-family:'DM Mono',monospace;font-size:0.55rem;font-weight:700;color:var(--cyan)">PLATINUM</div><div style="font-family:'DM Mono',monospace;font-size:0.65rem;font-weight:700;color:var(--text-1);margin:4px 0">Custom</div><div style="font-family:'DM Mono',monospace;font-size:0.45rem;color:var(--text-3)">Unlimited · Dedicated support</div></div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);padding:8px;background:rgba(0,0,0,0.15);border-radius:4px">All tiers include: CMMC compliance monitoring, supplier qualification tracking, AI risk scoring, OSINT feeds, API access, 99.9% uptime SLA. Deployment options: GovCloud, on-premise, hybrid.</div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost" onclick="closeModal('modal-pricing')">Close</button></div>
+  </div>
+</div>
+
+<!-- Macro Trend Chart Modal -->
+<div class="modal-overlay" id="macro-chart-modal" onclick="if(event.target===this)closeModal('macro-chart-modal')">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header-section"><h3>Aerospace Macro Risk Score — 30-Day Trend</h3><button class="modal-close" onclick="closeModal('macro-chart-modal')">✕</button></div>
+    <div class="modal-body-section">
+      <div style="display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.4rem;color:var(--text-3)"><span style="width:8px;height:8px;border-radius:2px;background:var(--cyan)"></span> Composite</div>
+        <div style="display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.4rem;color:var(--text-3)"><span style="width:8px;height:8px;border-radius:2px;background:var(--red)"></span> Material</div>
+        <div style="display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.4rem;color:var(--text-3)"><span style="width:8px;height:8px;border-radius:2px;background:var(--amber)"></span> Logistics</div>
+        <div style="display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:0.4rem;color:var(--text-3)"><span style="width:8px;height:8px;border-radius:2px;background:var(--green)"></span> Manufacturing</div>
+      </div>
+      <div id="macro-chart-container"></div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost" onclick="closeModal('macro-chart-modal')">Close</button></div>
+  </div>
+</div>
+
+<!-- Integrations Modal -->
+<div class="modal-overlay" id="modal-integrations">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header-section"><h3>Integrations &amp; Data Sources</h3><button class="modal-close" onclick="closeModal('modal-integrations')">✕</button></div>
+    <div class="modal-body-section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <div style="padding:6px 8px;background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">SAP Ariba</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-3)">Supplier qualification · PO lifecycle</div></div>
+        <div style="padding:6px 8px;background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">D&B Hoovers</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-3)">Financial health · Altman Z-score · DUNS</div></div>
+        <div style="padding:6px 8px;background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">SPIRE / SAM.gov</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-3)">Contract data · exclusions · CAGE codes</div></div>
+        <div style="padding:6px 8px;background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">SEDAR / SEC EDGAR</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-3)">Public filings · insider risk signals</div></div>
+        <div style="padding:6px 8px;background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">Siemens Teamcenter</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-3)">PLM · qualification milestones · BOM</div></div>
+        <div style="padding:6px 8px;background:rgba(103,232,249,0.03);border:1px solid rgba(103,232,249,0.08);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:600;color:var(--text-1)">OSINT Feeds</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-3)">Regulatory · geopolitical · sanctions</div></div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--text-3);padding:6px 8px;background:rgba(0,0,0,0.15);border-radius:4px">REST API · webhooks · certified connectors for IC / DoD environments</div>
+    </div>
+    <div class="modal-footer-section"><button class="btn-ghost" onclick="closeModal('modal-integrations')">Close</button></div>
+  </div>
+</div>
+
+
+<div class="inventory-overlay" id="inventory-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center">
+  <div style="background:var(--surface-1);border:1px solid var(--border-2);border-radius:var(--r-lg);max-width:600px;width:90%;max-height:80vh;overflow-y:auto;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="font-family:var(--font-heading);font-weight:700;font-size:0.9rem">Inventory Detail</h3>
+      <button class="modal-close" onclick="closeModal('inventory-overlay')">✕</button>
+    </div>
+    <table style="width:100%;font-size:0.58rem;border-collapse:collapse">
+      <thead><tr style="border-bottom:1px solid var(--border-1);color:var(--text-3);font-family:'DM Mono',monospace;font-size:0.5rem;text-transform:uppercase;letter-spacing:0.06em"><th style="padding:6px 8px;text-align:left">Part #</th><th style="padding:6px 8px;text-align:left">Description</th><th style="padding:6px 8px;text-align:right">Stock</th><th style="padding:6px 8px;text-align:right">Lead Time</th><th style="padding:6px 8px;text-align:left">Status</th></tr></thead>
+      <tbody id="inv-table-body">
+        <tr style="border-bottom:1px solid var(--border-0)"><td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text-2)">AS-9100-447</td><td style="padding:5px 8px;font-family:'Space Grotesk',sans-serif;color:var(--text-1)">Ti-6Al-4V Casting</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--red)">0</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--red)">26wks</td><td style="padding:5px 8px"><span style="padding:1px 6px;border-radius:3px;background:rgba(252,165,165,0.1);color:var(--red);font-family:'DM Mono',monospace;font-size:0.5rem">STOCKOUT</span></td></tr>
+        <tr style="border-bottom:1px solid var(--border-0)"><td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text-2)">VS-8842-A</td><td style="padding:5px 8px;font-family:'Space Grotesk',sans-serif;color:var(--text-1)">Valve Seat Assembly</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--red)">4</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--amber)">14wks</td><td style="padding:5px 8px"><span style="padding:1px 6px;border-radius:3px;background:rgba(252,165,165,0.1);color:var(--red);font-family:'DM Mono',monospace;font-size:0.5rem">CRITICAL</span></td></tr>
+        <tr style="border-bottom:1px solid var(--border-0)"><td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text-2)">CP-3319-B</td><td style="padding:5px 8px;font-family:'Space Grotesk',sans-serif;color:var(--text-1)">Composite Pre-Preg Roll</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--amber)">12</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--amber)">8wks</td><td style="padding:5px 8px"><span style="padding:1px 6px;border-radius:3px;background:rgba(252,211,77,0.1);color:var(--amber);font-family:'DM Mono',monospace;font-size:0.5rem">LOW</span></td></tr>
+        <tr style="border-bottom:1px solid var(--border-0)"><td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text-2)">FK-8847-X</td><td style="padding:5px 8px;font-family:'Space Grotesk',sans-serif;color:var(--text-1)">Fastener Kit #8847</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--green)">847</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--green)">2wks</td><td style="padding:5px 8px"><span style="padding:1px 6px;border-radius:3px;background:rgba(52,211,153,0.1);color:var(--green);font-family:'DM Mono',monospace;font-size:0.5rem">OK</span></td></tr>
+        <tr style="border-bottom:1px solid var(--border-0)"><td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text-2)">HY-2217-C</td><td style="padding:5px 8px;font-family:'Space Grotesk',sans-serif;color:var(--text-1)">Hydraulic Actuator</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--green)">23</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--green)">6wks</td><td style="padding:5px 8px"><span style="padding:1px 6px;border-radius:3px;background:rgba(52,211,153,0.1);color:var(--green);font-family:'DM Mono',monospace;font-size:0.5rem">OK</span></td></tr>
+        <tr style="border-bottom:1px solid var(--border-0)"><td style="padding:5px 8px;font-family:'DM Mono',monospace;color:var(--text-2)">AV-4412-D</td><td style="padding:5px 8px;font-family:'Space Grotesk',sans-serif;color:var(--text-1)">Avionics Bay Panel</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--amber)">6</td><td style="padding:5px 8px;font-family:'DM Mono',monospace;text-align:right;color:var(--amber)">18wks</td><td style="padding:5px 8px"><span style="padding:1px 6px;border-radius:3px;background:rgba(252,211,77,0.1);color:var(--amber);font-family:'DM Mono',monospace;font-size:0.5rem">LOW</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<svg id="geo-svg" style="display:none;position:absolute;inset:0;z-index:8;pointer-events:none" width="100%" height="100%"></svg>
+<div id="geo-map-wrap" style="display:none;position:absolute;inset:0;z-index:8"></div>
+<div id="geo-risk-heat" class="geo-risk-heat" style="display:none"></div>
+<div id="search-bar-wrap" style="display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:6px;background:var(--surface-1);border:1px solid var(--border-2);border-radius:var(--r-md);padding:6px 12px;align-items:center;min-width:280px">
+  <input type="text" id="search-bar" placeholder="Search suppliers, parts, programs..." style="flex:1;background:transparent;border:none;color:var(--text-1);font-family:var(--font-mono);font-size:0.65rem;outline:none">
+  <span id="search-esc-hint">ESC</span>
+</div>
+<div class="nlq-bar" id="nlq-bar">
+  <div class="nlq-input-wrap">
+    <input class="nlq-input" id="nlq-input" type="text" placeholder="Ask Morningstar AI... (e.g. 'What parts from StellarMet are at risk?')" autocomplete="off">
+    <button class="nlq-btn voice" id="nlq-voice-btn" onclick="nlqVoice()" title="Voice query">&#9835;</button>
+    <button class="nlq-btn" id="nlq-send-btn" onclick="nlqQuery()" title="Send">&#10148;</button>
+  </div>
+  <div class="nlq-suggestions" id="nlq-suggestions">
+    <span class="nlq-chip" onclick="nlqChip(this)">risk to F-35 Lot 17</span>
+    <span class="nlq-chip" onclick="nlqChip(this)">StellarMet parts at risk</span>
+    <span class="nlq-chip" onclick="nlqChip(this)">critical inventory items</span>
+    <span class="nlq-chip" onclick="nlqChip(this)">suppliers with expiring certs</span>
+    <span class="nlq-chip" onclick="nlqChip(this)">recommendations for CeramicTech</span>
+    <span class="nlq-chip" onclick="nlqChip(this)">top 5 supply chain risks</span>
+  </div>
+  <div class="nlq-response" id="nlq-response">
+    <div class="nlq-response-inner">
+      <div class="nlq-r-text" id="nlq-r-text"></div>
+      <div class="nlq-r-foot" id="nlq-r-foot"></div>
+    </div>
+  </div>
+</div>
+<div class="notification-container" id="notification-container"></div>
+
+<script src="capabilities.js"></script>
+<script>function getBackendUrl(){return (localStorage.getItem('morningstar_backend_url')||'http://localhost:3456').replace(/\/+$/,'');}
+var API_BASE=getBackendUrl();function apiUrl(p){return API_BASE+p;}
+</script>
+<script>function closeModal(id){var el=document.getElementById(id);if(!el)return;el.classList.remove('visible');if(id==='inventory-overlay')el.style.display='none';}function notify(msg,type){var c=document.getElementById('notification-container');if(!c)return;var e=document.createElement('div');e.className='notification'+(type?' '+type:'');e.textContent=msg;c.appendChild(e);setTimeout(function(){if(e.parentNode)e.parentNode.removeChild(e)},3500);}function updateNavClock(){var d=new Date();var h=String(d.getUTCHours()).padStart(2,'0');var m=String(d.getUTCMinutes()).padStart(2,'0');var s=String(d.getUTCSeconds()).padStart(2,'0');var el=document.getElementById('nav-clock');if(el)el.textContent=h+':'+m+':'+s+'Z'}updateNavClock();setInterval(updateNavClock,1000);
+
+/* ===== NLQ Engine (LLM + RAG via backend) ===== */
+var nlqHistory=[];var nlqHi=0;var nlqPending=false;
+async function nlqQueryLLM(query){
+  var txt=(query||'').trim();if(!txt&&(query=null)){var inp=document.getElementById('nlq-input');txt=inp.value.trim();if(!txt)return;inp.value=txt;}else if(!txt&&query===undefined){var inp=document.getElementById('nlq-input');txt=inp.value.trim();if(!txt)return;inp.value=txt;}
+  if(nlqPending){notify('Already processing a query. Please wait.','error');return;}
+  var resp=document.getElementById('nlq-response');var rText=document.getElementById('nlq-r-text');var rFoot=document.getElementById('nlq-r-foot');
+  rText.innerHTML='<span style="color:var(--text-3);animation:pulse 1s infinite">Analyzing supply graph...</span>';rFoot.innerHTML='';resp.classList.add('open');nlqPending=true;
+  try{
+    var result=await fetch(apiUrl('/api/nlq'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:txt})});
+    if(!result.ok){rText.innerHTML='<strong class="hl-red">API Error:</strong> '+result.status+' '+result.statusText+'. Make sure the server is running on port 3456.';nlqPending=false;return;}
+    var data=await result.json();
+    rText.innerHTML=data.answer.replace(/\n/g,'<br>')+(data.confidence<50?'<br><br><span class="hl-amber">Low confidence.</span> Try a more specific question.':'');
+    rFoot.innerHTML='<span>&#9679; NLQ confidence: <strong>'+(data.confidence||0)+'%</strong></span><span>&#9679; Provider: '+(data.provider||'builtin')+'</span><span>&#9679; Nodes matched: '+data.nodeCount+'</span><span>&#9679; Latency: '+Math.round((Date.now()-data.latency)*-1)+'ms</span>';
+    nlqHistory.push(txt);nlqHi=nlqHistory.length;notify('NLQ: "'+txt.substring(0,40)+(txt.length>40?'...':'')+'" analyzed','info');
+    if(data.relevantNodes&&data.relevantNodes.length>0)setTimeout(function(){highlightGraphNodes(data.relevantNodes);},100);
+  }catch(e){rText.innerHTML='<strong class="hl-red">Connection Error:</strong> '+e.message+'<br><br><span class="hl-amber">Is the server running? Try: <code style="background:var(--surface-2);padding:1px 4px;border-radius:2px">npm start</code> in backend/</span>';}
+  nlqPending=false;
+}
+function nlqQuery(q){nlqQueryLLM(q);}
+function nlqChip(el){nlqQueryLLM(el.textContent);}
+var nlqInput=document.getElementById('nlq-input');if(nlqInput){nlqInput.addEventListener('keydown',function(e){if(e.key==='Enter'){nlqQueryLLM();}});}
+function nlqVoice(){var btn=document.getElementById('nlq-voice-btn');if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){notify('Voice recognition not available in this browser. Try Chrome or Edge.','error');return;}btn.classList.toggle('listening');if(btn.classList.contains('listening')){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;var recog=new SR();recog.lang='en-US';recog.interimResults=false;recog.maxAlternatives=1;recog.onresult=function(e){var transcript=e.results[0][0].transcript;document.getElementById('nlq-input').value=transcript;btn.classList.remove('listening');nlqQueryLLM();};recog.onerror=function(){btn.classList.remove('listening');notify('Voice recognition failed. Try again.','error');};recog.start();}else{notify('Voice cancelled.','info');}}
+function highlightGraphNodes(nodeIds){if(typeof highlightNodes==='function')highlightNodes(nodeIds);}
+function toggleExplain(id){var el=document.getElementById(id);if(!el)return;el.classList.toggle('open');}
+
+/* ===== WebSocket — Live Graph & Data Updates ===== */
+var wsConn=null;var wsStatus=document.createElement('div');
+wsStatus.id='ws-status';wsStatus.style.cssText='position:fixed;top:62px;right:8px;z-index:9998;padding:2px 8px;border-radius:3px;font-family:DM Mono,monospace;font-size:0.4rem;letter-spacing:0.06em;transition:all 0.3s';
+wsStatus.textContent='WS: DISCONNECTED';wsStatus.style.background='rgba(252,165,165,0.12)';wsStatus.style.color='var(--red)';wsStatus.style.border='1px solid rgba(252,165,165,0.2)';
+document.body.appendChild(wsStatus);
+function wsConnect(){if(wsConn&&wsConn.readyState===1)return;try{wsConn=var wsBase=getBackendUrl().replace('http://','ws://').replace('https://','wss://');new WebSocket(wsBase+'/ws');wsConn.onopen=function(){wsStatus.textContent='WS: LIVE';wsStatus.style.background='rgba(52,211,153,0.1)';wsStatus.style.color='var(--green)';wsStatus.style.borderColor='rgba(52,211,153,0.2)';};wsConn.onmessage=function(e){try{var p=JSON.parse(e.data);if(p.type==='graph:update'&&p.data&&p.data.nodes&&typeof updateGraph==='function')updateGraph(p.data.nodes,p.data.edges);if(p.type==='simulation:complete')notify('Simulation complete — resilience score calculated','success');if(p.type==='feed:update')notify('Feed update: '+p.data.feed+' ('+p.data.recordCount+' records)','info');if(p.type==='macro:update'&&p.data&&typeof handleMacroWsUpdate==='function')handleMacroWsUpdate(p.data);if(p.type==='nlq:result'&&p.data&&p.data.answer){var ri=document.getElementById('nlq-response');var rt=document.getElementById('nlq-r-text');var rf=document.getElementById('nlq-r-foot');if(ri&&rt&&!ri.classList.contains('open')){rt.innerHTML=p.data.answer.replace(/\n/g,'<br>');rf.innerHTML='<span>&#9679; Pushed via WebSocket</span>';ri.classList.add('open');}}}catch(ex){}};wsConn.onclose=function(){wsStatus.textContent='WS: DISCONNECTED';wsStatus.style.background='rgba(252,165,165,0.12)';wsStatus.style.color='var(--red)';wsStatus.style.borderColor='rgba(252,165,165,0.2)';setTimeout(wsConnect,5000);};wsConn.onerror=function(){wsConn.close();};}catch(e){setTimeout(wsConnect,10000);}}
+setTimeout(wsConnect,1000);
+
+/* ===== Simulation Runner ===== */
+async function runSimulation(triggerNodeId,severity,duration){
+  var params={triggerNodeId:triggerNodeId||'StellarMet_t',severity:severity||0.8,duration:duration||30};
+  notify('Running simulation on '+params.triggerNodeId+'...','info');
+  try{
+    var r=await fetch(apiUrl('/api/simulation/run'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(params)});
+    var d=await r.json();
+    if(d.error){notify('Simulation failed: '+d.error,'error');return;}
+    notify('Simulation complete: '+d.totalAffectedNodes+' nodes affected, resilience '+d.resilienceScore+'/100, financial impact $'+(d.totalFinancialImpact/1e6).toFixed(1)+'M','success');
+    var simStat=document.getElementById('sim-status');if(simStat){simStat.innerHTML='<span style="color:var(--green)">&#9679; Live</span> Resilience: '+d.resilienceScore+'/100 · $'+(d.totalFinancialImpact/1e6).toFixed(1)+'M impact · '+d.totalAffectedNodes+' nodes · just now';}
+    var nlqInp=document.getElementById('nlq-input');if(nlqInp){nlqInp.value='Show simulation results for '+params.triggerNodeId;nlqQueryLLM();}
+  }catch(e){notify('Simulation error: '+e.message,'error');}
+}
+
+/* ===== Feedback Tracker ===== */
+async function logFeedback(query,answer,confidence,followed){
+  try{await fetch(apiUrl('/api/feedback/recommendation'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:query,answer:answer,confidence:confidence,userFollowed:followed})});}catch(e){}
+}
+async function logOutcome(recId,onTime,costVar,quality){
+  try{await fetch(apiUrl('/api/feedback/outcome'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recommendationId:recId,onTimeDelivery:onTime,costVariance:costVar,qualityScore:quality})});}catch(e){}
+}
+
+/* ===== Action Execution Engine ===== */
+async function executeAction(action,params){
+  var defaultParams=params||{};
+  var endpoints={'bridge-buy':'/api/actions/bridge-buy','escalation-memo':'/api/actions/escalation-memo','approve':'/api/actions/approve','supplier-email':'/api/actions/supplier-email','update-ims':'/api/actions/update-ims'};
+  var endpoint=apiUrl(endpoints[action]);
+  if(!endpoint){notify('Unknown action: '+action,'error');return;}
+  try{
+    var result=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(defaultParams)});
+    var data=await result.json();
+    if(data.success){notify(data.message||'Action executed successfully.','success');if(data.poNumber)notify('PO #'+data.poNumber+' created.','info');}else{notify('Action failed: '+(data.error||'Unknown error'),'error');}
+    return data;
+  }catch(e){notify('Action failed: '+e.message,'error');}
+}
+
+/* ===== MACRO INTELLIGENCE ===== */
+var _macroData={composite:50,material:50,logistics:50,manufacturing:50,geopolitical:50,trend:'stable'};
+var _macroHistory=[];
+function macroApiUrl(path){return apiUrl('/api/macro'+path);}
+
+async function refreshMacroData(){
+  var btn=document.getElementById('macro-refresh-btn');
+  if(btn){btn.disabled=true;btn.textContent='↻ Syncing...';}
+  try{
+    var cResp=await fetch(macroApiUrl('/composite'));
+    var cData=await cResp.json();
+    if(cData.status==='ok'){
+      _macroData=cData.score;
+      _macroHistory=cData.history||[];
+      renderMacroScore(cData.score);
+      renderMacroPillars(cData.score);
+      renderMacroTrendLabel(cData.score);
+    }
+    var pResp=await fetch(macroApiUrl('/commodities'));
+    var pData=await pResp.json();
+    if(pData.status==='ok')renderMacroCommodities(pData.commodities);
+
+    var portResp=await fetch(macroApiUrl('/ports'));
+    var portData=await portResp.json();
+    if(portData.status==='ok')renderMacroPorts(portData.ports);
+
+    var eResp=await fetch(macroApiUrl('/energy'));
+    var eData=await eResp.json();
+    if(eData.status==='ok')renderMacroRegions(eData.energy);
+
+    var rResp=await fetch(macroApiUrl('/recommendations'));
+    var rData=await rResp.json();
+    if(rData.status==='ok')renderMacroRecommendations(rData.recommendations);
+  }catch(e){
+    console.warn('Macro refresh failed, using mock:',e);
+    renderMockMacroData();
+  }
+  if(btn){btn.disabled=false;btn.textContent='↻ Refresh';}
+}
+
+function renderMacroScore(score){
+  var el=document.getElementById('macro-score-num');
+  var gauge=document.getElementById('macro-gauge-fg');
+  if(el)el.textContent=Math.round(score.composite);
+  if(gauge){
+    var circumference=175.93;
+    var offset=circumference-(score.composite/100)*circumference;
+    gauge.setAttribute('stroke-dashoffset',offset);
+    gauge.className='macro-gauge-fg'+(score.composite>=65?' red':score.composite>=40?' amber':' green');
+  }
+}
+
+function renderMacroPillars(score){
+  var el=document.getElementById('macro-pillars');
+  if(!el)return;
+  var pillars=[{k:'material',l:'Material'},{k:'logistics',l:'Logistics'},{k:'manufacturing',l:'Manufacturing'},{k:'geopolitical',l:'Geopolitical'}];
+  el.innerHTML=pillars.map(function(p){
+    var v=score[p.k]||50;
+    var cls=v>=65?'high':v>=40?'medium':'low';
+    return '<div class="macro-pillar"><span class="mp-label">'+p.l+'</span><span class="mp-val '+cls+'">'+Math.round(v)+'</span></div>';
+  }).join('');
+}
+
+function renderMacroTrendLabel(score){
+  var el=document.getElementById('macro-trend-label');
+  if(!el)return;
+  var arrows={'improving':'&#8595; Improving','deteriorating':'&#8593; Deteriorating','stable':'&#8594; Stable'};
+  el.innerHTML=(arrows[score.trend]||'&#8594; Stable')+' &middot; Composite: '+Math.round(score.composite)+'/100';
+}
+
+var CRITICAL_COMMODITIES=['TITANIUM_SPONGE','ALUMINUM','COPPER','WTI_OIL','STEEL'];
+
+function renderMacroCommodities(commodities){
+  var el=document.getElementById('macro-commodity-ticker');
+  if(!el||!commodities||!commodities.length)return;
+  var names={TITANIUM_SPONGE:'Ti Sponge',ALUMINUM:'Aluminum',COPPER:'Copper',WTI_OIL:'WTI Oil',STEEL:'Steel'};
+  el.innerHTML=commodities.filter(function(c){return CRITICAL_COMMODITIES.indexOf(c.symbol)>=0;}).map(function(c){
+    var chg=c.change_1d||0;
+    var cls=chg>=0?'up':'down';
+    var arrow=chg>=0?'&#8593;':'&#8595;';
+    return '<div class="mc-item"><span class="mc-sym">'+(names[c.symbol]||c.symbol)+'</span><span class="mc-price">$'+c.price+'</span><span class="mc-chg '+cls+'">'+arrow+' '+Math.abs(chg).toFixed(1)+'%</span></div>';
+  }).join('');
+}
+
+function renderMacroPorts(ports){
+  var el=document.getElementById('macro-ports-body');
+  if(!el||!ports||!ports.length)return;
+  var criticalPorts=['Port of Long Beach','Port of Los Angeles','Port of Houston','Port of Savannah','Port of Rotterdam','Port of Singapore','Port of Shanghai'];
+  el.innerHTML=ports.filter(function(p){return criticalPorts.indexOf(p.port_name)>=0;}).slice(0,6).map(function(p){
+    var cs=p.congestion_score||50;
+    var cls=cs>=65?'cong-red':cs>=40?'cong-yellow':'cong-green';
+    var label=cs>=65?'CRITICAL':cs>=40?'ELEVATED':'NOMINAL';
+    return '<tr><td>'+p.port_name.replace('Port of ','')+'</td><td class="'+cls+'">'+label+'</td><td>'+p.vessel_count+'v</td></tr>';
+  }).join('');
+}
+
+function renderMacroRegions(energy){
+  var el=document.getElementById('macro-regions');
+  if(!el||!energy||!energy.length)return;
+  var top=energy.filter(function(r){return r.region!=='US_AGGREGATE'&&r.manufacturing_pulse!=null;}).sort(function(a,b){return b.manufacturing_pulse-a.manufacturing_pulse;}).slice(0,3);
+  if(!top.length){top=[{region:'CAISO',manufacturing_pulse:62},{region:'PJM',manufacturing_pulse:58},{region:'ERCOT',manufacturing_pulse:55}];}
+  el.innerHTML=top.map(function(r){
+    var pulse=r.manufacturing_pulse||55;
+    var trend=pulse>=55?'&#8593;':pulse>=45?'&#8594;':'&#8595;';
+    return '<div class="macro-region"><div class="mr-name">'+r.region+'</div><div class="mr-pulse">'+Math.round(pulse)+'</div><div class="mr-trend">'+trend+' Pulse</div></div>';
+  }).join('');
+}
+
+function renderMacroRecommendations(recs){
+  var el=document.getElementById('macro-rec-container');
+  if(!el)return;
+  if(!recs||!recs.length){
+    el.innerHTML='<div style="font-family:\'Space Grotesk\',sans-serif;font-size:0.52rem;color:var(--text-3);text-align:center;padding:8px">No active recommendations — conditions nominal</div>';
+    return;
+  }
+  el.innerHTML=recs.slice(0,5).map(function(r){
+    var cls=(r.priority==='critical'?' critical':r.priority==='high'?' high':'');
+    var pCls=r.priority==='critical'?'critical':r.priority==='high'?'high':'low';
+    return '<div class="macro-rec-item'+cls+'"><div class="rec-priority '+pCls+'">&#9679; '+r.priority.toUpperCase()+': '+r.action.replace(/_/g,' ')+'</div><div class="rec-message">'+r.message+'</div></div>';
+  }).join('');
+}
+
+function renderMockMacroData(){
+  renderMacroScore(_macroData);
+  renderMacroPillars(_macroData);
+  renderMacroTrendLabel(_macroData);
+  renderMacroCommodities([{symbol:'TITANIUM_SPONGE',name:'Titanium Sponge',price:38.50,change_1d:2.3},{symbol:'ALUMINUM',name:'Aluminum',price:2350,change_1d:-0.8},{symbol:'COPPER',name:'Copper',price:3.95,change_1d:1.2},{symbol:'WTI_OIL',name:'WTI Oil',price:78.50,change_1d:-1.5},{symbol:'STEEL',name:'Steel',price:720,change_1d:0.3}]);
+  renderMacroPorts([{port_name:'Port of Long Beach',congestion_score:72,vessel_count:48},{port_name:'Port of Los Angeles',congestion_score:68,vessel_count:55},{port_name:'Port of Houston',congestion_score:42,vessel_count:32},{port_name:'Port of Rotterdam',congestion_score:38,vessel_count:40},{port_name:'Port of Singapore',congestion_score:55,vessel_count:75}]);
+  renderMacroRegions([{region:'CAISO',manufacturing_pulse:62},{region:'PJM',manufacturing_pulse:58},{region:'ERCOT',manufacturing_pulse:55}]);
+  renderMacroRecommendations([{action:'MONITOR_MATERIALS',priority:'medium',message:'Monitor aerospace material prices — volatility increasing'},{action:'REVIEW_LOGISTICS',priority:'medium',message:'Review logistics alternatives — port congestion rising'}]);
+}
+
+function showMacroTrend(){
+  var modal=document.getElementById('macro-chart-modal');
+  if(!modal)return;
+  modal.classList.add('visible');
+  setTimeout(function(){renderMacroChart();},200);
+}
+
+function renderMacroChart(){
+  var container=document.getElementById('macro-chart-container');
+  if(!container)return;
+  container.innerHTML='';
+
+  var data=_macroHistory&&_macroHistory.length>=2?_macroHistory.slice(-30):[];
+  if(data.length<2){
+    for(var i=29;i>=0;i--){
+      var d=new Date();d.setDate(d.getDate()-i);
+      var base=_macroData.composite||50;
+      data.push({composite_score:base+Math.sin(i*0.5)*8+Math.cos(i*0.3)*4+(Math.random()-0.5)*3,time:d.toISOString().slice(0,10),material_score:base+10+Math.sin(i*0.4)*10,logistics_score:base-5+Math.cos(i*0.6)*8,manufacturing_score:base-10+Math.sin(i*0.7)*5});
+    }
+  }
+
+  try{
+    var margin={top:20,right:20,bottom:30,left:40};
+    var w=container.clientWidth||640;
+    var h=280;
+    var iw=w-margin.left-margin.right,ih=h-margin.top-margin.bottom;
+
+    var svg=d3.select(container).append('svg').attr('width',w).attr('height',h).append('g').attr('transform','translate('+margin.left+','+margin.top+')');
+
+    var x=d3.scaleTime().domain(d3.extent(data,function(d){return new Date(d.time);})).range([0,iw]);
+    var y=d3.scaleLinear().domain([0,100]).range([ih,0]);
+
+    svg.append('g').attr('transform','translate(0,'+ih+')').call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat('%m/%d')));
+    svg.append('g').call(d3.axisLeft(y).ticks(5));
+
+    var line=d3.line().x(function(d){return x(new Date(d.time));}).y(function(d){return y(d.composite_score);}).curve(d3.curveMonotoneX);
+    var area=d3.area().x(function(d){return x(new Date(d.time));}).y0(y(0)).y1(function(d){return y(d.composite_score);}).curve(d3.curveMonotoneX);
+
+    svg.append('path').datum(data).attr('d',area).attr('fill','rgba(103,232,249,0.06)');
+    svg.append('path').datum(data).attr('d',line).attr('fill','none').attr('stroke','#67E8F9').attr('stroke-width',2).attr('stroke-linecap','round');
+
+    var materialLine=d3.line().x(function(d){return x(new Date(d.time));}).y(function(d){return y(d.material_score||50);}).curve(d3.curveMonotoneX);
+    svg.append('path').datum(data).attr('d',materialLine).attr('fill','none').attr('stroke','rgba(252,165,165,0.5)').attr('stroke-width',1).attr('stroke-dasharray','3,3');
+
+    var logisticsLine=d3.line().x(function(d){return x(new Date(d.time));}).y(function(d){return y(d.logistics_score||50);}).curve(d3.curveMonotoneX);
+    svg.append('path').datum(data).attr('d',logisticsLine).attr('fill','none').attr('stroke','rgba(252,211,77,0.5)').attr('stroke-width',1).attr('stroke-dasharray','3,3');
+
+    if(data.length>0){
+      var last=data[data.length-1];
+      svg.append('circle').attr('cx',x(new Date(last.time))).attr('cy',y(last.composite_score)).attr('r',3).attr('fill','#67E8F9').attr('stroke','rgba(8,10,14,0.8)').attr('stroke-width',2);
+    }
+  }catch(e){container.innerHTML='<div style="text-align:center;padding:60px;color:var(--text-3);font-family:var(--font-mono);font-size:0.5rem">Chart unavailable</div>';}
+}
+
+function handleMacroWsUpdate(data){
+  if(!data)return;
+  _macroData=data;
+  renderMacroScore(data);
+  renderMacroPillars(data);
+  renderMacroTrendLabel(data);
+}
+
+// Initialize macro data on load
+setTimeout(refreshMacroData,2000);
+</script>
+</body>
+</html>
