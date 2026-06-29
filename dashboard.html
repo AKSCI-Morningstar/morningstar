@@ -639,6 +639,7 @@ header{flex-shrink:0}
       <span class="header-trigger-btn" onclick="var o=document.getElementById('inventory-overlay');o.style.display='flex';o.classList.add('visible')"><span class="trig-icon">📦</span> Inventory</span>
       <a href="causal-engine.html" class="nav-link">Causal AI</a>
       <span class="nav-link" style="cursor:pointer" onclick="document.getElementById('modal-integrations').classList.add('visible')">Integrations</span>
+      <a href="capabilities.html?demo=true" class="nav-link" style="background:rgba(103,232,249,0.12);border-color:rgba(103,232,249,0.35);color:var(--cyan)">View Capabilities</a>
       <a href="deploymorningstar.html" class="nav-link">Deploy</a>
       <span class="nav-link" style="cursor:pointer" onclick="document.getElementById('modal-pricing').classList.add('visible')">Pricing</span>
     </div>
@@ -654,6 +655,7 @@ header{flex-shrink:0}
     <span class="nav-bar-btn active" onclick="notify('Dashboard — current view','info')"><span class="nb-icon">⬡</span> Dashboard</span>
     <span class="nav-bar-btn" onclick="notify('Opening Supply Chain Topology Map','info')"><span class="nb-icon">⊞</span> Topology</span>
     <span class="nav-bar-btn" onclick="notify('Opening Causal AI Engine','info')"><span class="nb-icon">⟐</span> Causal Engine</span>
+    <a href="capabilities.html?demo=true" class="nav-bar-btn"><span class="nb-icon">◈</span> Capabilities</a>
   </div>
   <div class="nav-section-sep"></div>
   <div class="nav-section">
@@ -1480,6 +1482,31 @@ The F-35 Titanium Casting (PN 47821-B) is the highest-urgency item: its qualific
 <script src="capabilities.js"></script>
 <script>function getBackendUrl(){return (localStorage.getItem('morningstar_backend_url')||'http://localhost:3456').replace(/\/+$/,'');}
 var API_BASE=getBackendUrl();function apiUrl(p){return API_BASE+p;}
+/* ===== Deployment Config — dynamic reflection ===== */
+var _deployConfig=null;
+async function fetchDeployConfig(){
+  try{
+    var r=await fetch(apiUrl('/api/deploy/config'));
+    var d=await r.json();
+    if(d.status==='ok'&&d.config){_deployConfig=d.config;applyDeployConfig(d.config);}
+  }catch(e){/* offline — no config */}
+}
+function applyDeployConfig(cfg){
+  /* Header: show company name */
+  var titleEl=document.querySelector('.header-title-line');
+  var subEl=document.querySelector('.header-sub-line');
+  if(titleEl&&cfg.company&&cfg.company.name)titleEl.textContent='Morningstar — '+cfg.company.name;
+  if(subEl&&cfg.user&&cfg.user.name)subEl.textContent='Deployed by '+cfg.user.name+' · '+cfg.user.role+' · '+cfg.company.industry;
+  /* Stat chips: reflect configured programs */
+  var progEl=document.getElementById('ns-programs');
+  if(progEl&&cfg.programs&&cfg.programs.length)progEl.textContent=cfg.programs.length;
+  /* Show deploy badge in nav */
+  var navDeploy=document.querySelector('.nav-bar-btn[href="deploymorningstar.html"]');
+  if(navDeploy)navDeploy.innerHTML='<span class="nb-icon">✓</span> Configured';
+}
+/* Run on load */
+setTimeout(fetchDeployConfig,500);
+
 </script>
 <script>function closeModal(id){var el=document.getElementById(id);if(!el)return;el.classList.remove('visible');if(id==='inventory-overlay')el.style.display='none';}function notify(msg,type){var c=document.getElementById('notification-container');if(!c)return;var e=document.createElement('div');e.className='notification'+(type?' '+type:'');e.textContent=msg;c.appendChild(e);setTimeout(function(){if(e.parentNode)e.parentNode.removeChild(e)},3500);}function updateNavClock(){var d=new Date();var h=String(d.getUTCHours()).padStart(2,'0');var m=String(d.getUTCMinutes()).padStart(2,'0');var s=String(d.getUTCSeconds()).padStart(2,'0');var el=document.getElementById('nav-clock');if(el)el.textContent=h+':'+m+':'+s+'Z'}updateNavClock();setInterval(updateNavClock,1000);
 

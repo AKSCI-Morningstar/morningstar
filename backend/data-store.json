@@ -1914,6 +1914,75 @@
             "commodity": "PMA Parts"
           }
         ]
+      },
+      {
+        "timestamp": "2026-06-29T05:26:05.087Z",
+        "records": [
+          {
+            "supplierId": "StellarMet_t",
+            "poNumber": "PO-2024-8472",
+            "value": 47000000,
+            "status": "open",
+            "leadTimeDays": 120,
+            "riskFlag": "single_source",
+            "commodity": "Titanium Casting",
+            "plant": "Baoji CN"
+          },
+          {
+            "supplierId": "Aerocast_Inc_t",
+            "poNumber": "PO-2024-8473",
+            "value": 8500000,
+            "status": "open",
+            "leadTimeDays": 45,
+            "riskFlag": "none",
+            "commodity": "Investment Casting"
+          },
+          {
+            "supplierId": "CeramicTech_t",
+            "poNumber": "PO-2024-8474",
+            "value": 3200000,
+            "status": "at_risk",
+            "leadTimeDays": 60,
+            "riskFlag": "cert_expiring",
+            "commodity": "Ceramic Matrix Composites"
+          },
+          {
+            "supplierId": "NanoSense_t",
+            "poNumber": "PO-2024-8475",
+            "value": 5600000,
+            "status": "on_hold",
+            "leadTimeDays": 90,
+            "riskFlag": "quality_issue",
+            "commodity": "Sensors"
+          },
+          {
+            "supplierId": "FluidLogic_t",
+            "poNumber": "PO-2024-8476",
+            "value": 7800000,
+            "status": "open",
+            "leadTimeDays": 30,
+            "riskFlag": "none",
+            "commodity": "Fluid Systems"
+          },
+          {
+            "supplierId": "AMETEK_t",
+            "poNumber": "PO-2024-8477",
+            "value": 2100000,
+            "status": "open",
+            "leadTimeDays": 14,
+            "riskFlag": "none",
+            "commodity": "Precision Components"
+          },
+          {
+            "supplierId": "QualiMet_t",
+            "poNumber": "PO-2024-8478",
+            "value": 3500000,
+            "status": "open",
+            "leadTimeDays": 21,
+            "riskFlag": "pma_only",
+            "commodity": "PMA Parts"
+          }
+        ]
       }
     ],
     "teamcenter": [
@@ -2476,6 +2545,62 @@
             "altSupplier": "QualiMet_t"
           }
         ]
+      },
+      {
+        "timestamp": "2026-06-29T05:26:05.097Z",
+        "records": [
+          {
+            "partNumber": "TC-F35-001",
+            "partName": "Titanium Casting",
+            "status": "stockout",
+            "bomLevel": 2,
+            "program": "F-35 Program_t",
+            "revision": "C",
+            "engineeringChange": "ECR-2024-112",
+            "qualifiedSuppliers": [
+              "StellarMet_t"
+            ],
+            "pendingQual": [
+              "AMETEK_t"
+            ]
+          },
+          {
+            "partNumber": "TC-F35-002",
+            "partName": "Engine Subsystem",
+            "status": "active",
+            "bomLevel": 1,
+            "program": "F-35 Program_t",
+            "revision": "B",
+            "leadTimeDays": 120
+          },
+          {
+            "partNumber": "TC-ART-001",
+            "partName": "Valve Group",
+            "status": "critical",
+            "bomLevel": 2,
+            "program": "Artemis Program_t",
+            "revision": "A",
+            "quantityRemaining": 4
+          },
+          {
+            "partNumber": "TC-F35-003",
+            "partName": "Fastener Kit",
+            "status": "active",
+            "bomLevel": 3,
+            "program": "F-35 Program_t",
+            "revision": "D",
+            "quantityOnHand": 340
+          },
+          {
+            "partNumber": "TC-ORI-001",
+            "partName": "PMA Actuator",
+            "status": "active",
+            "bomLevel": 2,
+            "program": "Orion Capsule_t",
+            "revision": "B",
+            "altSupplier": "QualiMet_t"
+          }
+        ]
       }
     ],
     "outlook_calendar": [
@@ -2879,6 +3004,51 @@
             "type": "supplier_summit",
             "title": "Q4 Defense Supplier Summit",
             "date": "2026-08-12T07:54:18.095Z",
+            "organizer": "DLA",
+            "status": "announced"
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-06-29T05:26:05.097Z",
+        "records": [
+          {
+            "type": "qualification_review",
+            "title": "F-35 Ti-6Al-4V Casting Qual Review",
+            "date": "2026-07-11T05:26:05.097Z",
+            "organizer": "AFLCMC",
+            "attendees": [
+              "StellarMet",
+              "AMETEK",
+              "Lockheed Martin"
+            ],
+            "status": "confirmed"
+          },
+          {
+            "type": "nadcap_audit",
+            "title": "CeramicTech Nadcap NDT Reapplication",
+            "date": "2026-07-13T05:26:05.097Z",
+            "organizer": "PRI",
+            "status": "in_process"
+          },
+          {
+            "type": "program_review",
+            "title": "Artemis Engine PMR",
+            "date": "2026-07-20T05:26:05.097Z",
+            "organizer": "NASA HQ",
+            "status": "tentative"
+          },
+          {
+            "type": "quality_audit",
+            "title": "NanoSense Quality Audit",
+            "date": "2026-07-29T05:26:05.097Z",
+            "organizer": "AKSCI QA",
+            "status": "scheduled"
+          },
+          {
+            "type": "supplier_summit",
+            "title": "Q4 Defense Supplier Summit",
+            "date": "2026-08-13T05:26:05.097Z",
             "organizer": "DLA",
             "status": "announced"
           }
@@ -3549,6 +3719,89 @@
             "industry": "PMA Parts"
           }
         ]
+      },
+      {
+        "timestamp": "2026-06-29T05:26:05.097Z",
+        "records": [
+          {
+            "supplierId": "StellarMet_t",
+            "creditScore": 38,
+            "creditLabel": "High Risk",
+            "paymentHistory": "NET-90 avg 45d late",
+            "duns": "42-847-1920",
+            "revenue": 120000000,
+            "employees": 340,
+            "industry": "Aerospace Metals",
+            "riskIndicators": [
+              "concentration",
+              "geo_political"
+            ]
+          },
+          {
+            "supplierId": "AMETEK_t",
+            "creditScore": 82,
+            "creditLabel": "Low Risk",
+            "paymentHistory": "NET-30 avg 2d early",
+            "duns": "80-375-6291",
+            "revenue": 4500000000,
+            "employees": 18000,
+            "industry": "Precision Manufacturing"
+          },
+          {
+            "supplierId": "Aerocast_Inc_t",
+            "creditScore": 45,
+            "creditLabel": "Moderate Risk",
+            "paymentHistory": "NET-60 avg 15d late",
+            "duns": "73-518-4029",
+            "revenue": 89000000,
+            "employees": 210,
+            "industry": "Investment Casting"
+          },
+          {
+            "supplierId": "CeramicTech_t",
+            "creditScore": 55,
+            "creditLabel": "Moderate Risk",
+            "paymentHistory": "NET-45 avg 10d late",
+            "duns": "19-384-7150",
+            "revenue": 65000000,
+            "employees": 180,
+            "industry": "Ceramics"
+          },
+          {
+            "supplierId": "NanoSense_t",
+            "creditScore": 30,
+            "creditLabel": "High Risk",
+            "paymentHistory": "NET-30 avg 60d late",
+            "duns": "55-901-2834",
+            "revenue": 42000000,
+            "employees": 95,
+            "industry": "Sensors",
+            "riskIndicators": [
+              "quality_issues",
+              "liquidity"
+            ]
+          },
+          {
+            "supplierId": "FluidLogic_t",
+            "creditScore": 72,
+            "creditLabel": "Low Risk",
+            "paymentHistory": "NET-45 avg 5d early",
+            "duns": "61-472-8301",
+            "revenue": 210000000,
+            "employees": 520,
+            "industry": "Fluid Systems"
+          },
+          {
+            "supplierId": "QualiMet_t",
+            "creditScore": 82,
+            "creditLabel": "Low Risk",
+            "paymentHistory": "NET-30 avg 0d",
+            "duns": "38-156-7924",
+            "revenue": 95000000,
+            "employees": 240,
+            "industry": "PMA Parts"
+          }
+        ]
       }
     ],
     "spire_gov": [
@@ -3994,6 +4247,46 @@
       },
       {
         "timestamp": "2026-06-28T07:54:18.096Z",
+        "records": [
+          {
+            "supplierId": "StellarMet_t",
+            "value": 47000000,
+            "status": "active"
+          },
+          {
+            "supplierId": "Aerocast_Inc_t",
+            "value": 8500000,
+            "status": "active"
+          },
+          {
+            "supplierId": "CeramicTech_t",
+            "value": 3200000,
+            "status": "at_risk"
+          },
+          {
+            "supplierId": "NanoSense_t",
+            "value": 5600000,
+            "status": "on_hold"
+          },
+          {
+            "supplierId": "FluidLogic_t",
+            "value": 7800000,
+            "status": "active"
+          },
+          {
+            "supplierId": "AMETEK_t",
+            "value": 2100000,
+            "status": "active"
+          },
+          {
+            "supplierId": "QualiMet_t",
+            "value": 3500000,
+            "status": "active"
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-06-29T05:26:05.097Z",
         "records": [
           {
             "supplierId": "StellarMet_t",
@@ -4597,6 +4890,57 @@
       },
       {
         "timestamp": "2026-06-28T07:54:18.096Z",
+        "records": [
+          {
+            "supplierId": "StellarMet_t",
+            "status": "active",
+            "excluded": false,
+            "cageCode": "3F4G7",
+            "samExpiration": "2025-06-30",
+            "businessSize": "small",
+            "naics": "331491"
+          },
+          {
+            "supplierId": "AMETEK_t",
+            "status": "active",
+            "excluded": false,
+            "cageCode": "8H2J1",
+            "samExpiration": "2025-12-31",
+            "businessSize": "large",
+            "naics": "332710"
+          },
+          {
+            "supplierId": "CeramicTech_t",
+            "status": "active",
+            "excluded": false,
+            "cageCode": "1B9K5",
+            "samExpiration": "2025-09-15",
+            "businessSize": "small",
+            "naics": "327110"
+          },
+          {
+            "supplierId": "NanoSense_t",
+            "status": "suspended",
+            "excluded": true,
+            "cageCode": "4D6M2",
+            "samExpiration": "2024-03-01",
+            "businessSize": "small",
+            "naics": "334513",
+            "exclusionReason": "Quality non-compliance"
+          },
+          {
+            "supplierId": "Aerocast_Inc_t",
+            "status": "active",
+            "excluded": false,
+            "cageCode": "7N3P8",
+            "samExpiration": "2025-04-30",
+            "businessSize": "small",
+            "naics": "331512"
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-06-29T05:26:05.097Z",
         "records": [
           {
             "supplierId": "StellarMet_t",
@@ -6891,6 +7235,326 @@
     },
     {
       "timestamp": "2026-06-28T07:54:18.100Z",
+      "nodes": [
+        {
+          "id": "Artemis Program_t",
+          "type": "program",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Orion Capsule_t",
+          "type": "program",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Engine Subsystem_t",
+          "type": "assembly",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Fuel Tank_t",
+          "type": "assembly",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Heat Shield_t",
+          "type": "assembly",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Avionics Bay_t",
+          "type": "assembly",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Titanium Casting_t",
+          "type": "component",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Valve Group_t",
+          "type": "component",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Ceramic Tiles_t",
+          "type": "component",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Wiring Harness_t",
+          "type": "component",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Carbon Fiber Panel_t",
+          "type": "component",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Sensor Array_t",
+          "type": "component",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Aerocast Inc_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "FluidLogic_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "CeramicTech_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "WiredIn Solutions_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "NanoSense Inc_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "StellarMet_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "AMETEK Specialty_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "QualiMet_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "NanoAlloy_t",
+          "type": "supplier",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "F-35 Program_t",
+          "type": "program",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Port of Long Beach_t",
+          "type": "port",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Port of Rotterdam_t",
+          "type": "port",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Dayton Facility_t",
+          "type": "facility",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Houston Assembly Plant_t",
+          "type": "facility",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Singapore Buffer Stock_t",
+          "type": "warehouse",
+          "attributes": {},
+          "risk": 0
+        },
+        {
+          "id": "Asia-Pacific_t",
+          "type": "region",
+          "attributes": {},
+          "risk": 0
+        }
+      ],
+      "edges": [
+        {
+          "source": "Aerocast Inc_t",
+          "target": "Titanium Casting_t",
+          "type": "manufactures",
+          "leadTime": 7
+        },
+        {
+          "source": "FluidLogic_t",
+          "target": "Valve Group_t",
+          "type": "manufactures",
+          "leadTime": 3
+        },
+        {
+          "source": "CeramicTech_t",
+          "target": "Ceramic Tiles_t",
+          "type": "manufactures",
+          "leadTime": 5
+        },
+        {
+          "source": "WiredIn Solutions_t",
+          "target": "Wiring Harness_t",
+          "type": "manufactures",
+          "leadTime": 2
+        },
+        {
+          "source": "NanoSense Inc_t",
+          "target": "Sensor Array_t",
+          "type": "manufactures",
+          "leadTime": 4
+        },
+        {
+          "source": "Titanium Casting_t",
+          "target": "Engine Subsystem_t",
+          "type": "supplies",
+          "leadTime": 2
+        },
+        {
+          "source": "Valve Group_t",
+          "target": "Engine Subsystem_t",
+          "type": "supplies",
+          "leadTime": 1
+        },
+        {
+          "source": "Ceramic Tiles_t",
+          "target": "Heat Shield_t",
+          "type": "supplies",
+          "leadTime": 3
+        },
+        {
+          "source": "Wiring Harness_t",
+          "target": "Avionics Bay_t",
+          "type": "supplies",
+          "leadTime": 1
+        },
+        {
+          "source": "Carbon Fiber Panel_t",
+          "target": "Heat Shield_t",
+          "type": "supplies",
+          "leadTime": 2
+        },
+        {
+          "source": "Sensor Array_t",
+          "target": "Avionics Bay_t",
+          "type": "supplies",
+          "leadTime": 2
+        },
+        {
+          "source": "Engine Subsystem_t",
+          "target": "Artemis Program_t",
+          "type": "depends_on",
+          "leadTime": 1
+        },
+        {
+          "source": "Fuel Tank_t",
+          "target": "Orion Capsule_t",
+          "type": "depends_on",
+          "leadTime": 1
+        },
+        {
+          "source": "Heat Shield_t",
+          "target": "Orion Capsule_t",
+          "type": "depends_on",
+          "leadTime": 1
+        },
+        {
+          "source": "Avionics Bay_t",
+          "target": "Orion Capsule_t",
+          "type": "depends_on",
+          "leadTime": 1
+        },
+        {
+          "source": "Engine Subsystem_t",
+          "target": "Orion Capsule_t",
+          "type": "depends_on",
+          "leadTime": 1
+        },
+        {
+          "source": "Port of Long Beach_t",
+          "target": "Aerocast Inc_t",
+          "type": "ships_to",
+          "leadTime": 10
+        },
+        {
+          "source": "Port of Rotterdam_t",
+          "target": "FluidLogic_t",
+          "type": "ships_to",
+          "leadTime": 14
+        },
+        {
+          "source": "Singapore Buffer Stock_t",
+          "target": "Engine Subsystem_t",
+          "type": "ships_to",
+          "leadTime": 5
+        },
+        {
+          "source": "StellarMet_t",
+          "target": "Aerocast Inc_t",
+          "type": "supplies",
+          "leadTime": 14
+        },
+        {
+          "source": "AMETEK Specialty_t",
+          "target": "Titanium Casting_t",
+          "type": "manufactures",
+          "leadTime": 6
+        },
+        {
+          "source": "QualiMet_t",
+          "target": "Sensor Array_t",
+          "type": "manufactures",
+          "leadTime": 8
+        },
+        {
+          "source": "NanoAlloy_t",
+          "target": "Ceramic Tiles_t",
+          "type": "manufactures",
+          "leadTime": 4
+        },
+        {
+          "source": "StellarMet_t",
+          "target": "F-35 Program_t",
+          "type": "supplies",
+          "leadTime": 21
+        }
+      ],
+      "resilienceScore": null
+    },
+    {
+      "timestamp": "2026-06-29T05:26:05.101Z",
       "nodes": [
         {
           "id": "Artemis Program_t",

@@ -75,6 +75,7 @@ app.use('/api/reconciliation', require('./src/routes/reconciliation'));
 app.use('/api/temporal', require('./src/routes/temporal'));
 app.use('/api/feeds/manage', require('./src/routes/feeds'));
 app.use('/api/macro', require('./src/routes/macro'));
+app.use('/api/deploy', require('./src/routes/deploy'));
 
 // =============================================================================
 // Health

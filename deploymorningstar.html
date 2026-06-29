@@ -154,6 +154,23 @@ footer{padding:48px 28px 32px;background:#060913;text-align:center}
             <option>Other</option>
           </select>
         </div>
+        <div class="f2">
+          <div class="fg">
+            <label class="fl" for="programs">Key Programs (comma-separated)</label>
+            <input class="fi" type="text" id="programs" placeholder="e.g., F-35, Artemis, Orion">
+          </div>
+          <div class="fg">
+            <label class="fl" for="industry">Industry</label>
+            <select class="fi" id="industry">
+              <option value="">Select...</option>
+              <option>Aerospace &amp; Defense</option>
+              <option>Space Systems</option>
+              <option>Defense Contracting</option>
+              <option>Commercial Aerospace</option>
+              <option>Government / DoD</option>
+            </select>
+          </div>
+        </div>
         <div class="fg">
           <label class="fl" for="message">What's keeping you up at night?</label>
           <textarea class="fi" id="message" placeholder="e.g., We have 14 single-source parts on Artemis and no visibility beyond Tier 1..."></textarea>
@@ -211,17 +228,59 @@ function initReveal() {
   els.forEach(function(el) { obs.observe(el); });
 }
 
+function apiUrl(p) { return (localStorage.getItem('morningstar_backend_url') || '') + p; }
+
 function handleSubmit(e) {
   e.preventDefault();
   var btn = document.getElementById('submit-btn');
-  var orig = btn.innerHTML;
-  btn.innerHTML = '✓ Submitted';
-  btn.style.background = 'rgba(72,187,120,0.08)';
-  btn.style.borderColor = 'var(--green)';
-  btn.style.color = 'var(--green)';
-  btn.style.animation = 'none';
+  var name = document.getElementById('name').value.trim();
+  var email = document.getElementById('email').value.trim();
+  var company = document.getElementById('company').value.trim();
+  var role = document.getElementById('role').value;
+  var erp = document.getElementById('erp').value;
+  var programs = document.getElementById('programs').value.trim();
+  var industry = document.getElementById('industry').value;
+  var message = document.getElementById('message').value.trim();
+
+  var payload = {
+    company: { name: company, industry: industry || 'Aerospace & Defense' },
+    user: { name: name, email: email, role: role },
+    erp: erp || 'None',
+    programs: programs ? programs.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [],
+    suppliers: [],
+    painPoints: message || ''
+  };
+
+  btn.innerHTML = 'Deploying...';
   btn.disabled = true;
-  document.getElementById('deploy-form').querySelectorAll('input,textarea,select').forEach(function(el) { el.disabled = true; });
+
+  fetch(apiUrl('/api/deploy/config'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.status === 'ok') {
+      btn.innerHTML = '✓ Deployed';
+      btn.style.background = 'rgba(72,187,120,0.08)';
+      btn.style.borderColor = 'var(--green)';
+      btn.style.color = 'var(--green)';
+      btn.style.animation = 'none';
+      document.getElementById('deploy-form').querySelectorAll('input,textarea,select').forEach(function(el) { el.disabled = true; });
+      setTimeout(function() { window.location.href = 'dashboard.html?deployed=true'; }, 1200);
+    } else {
+      btn.innerHTML = 'Error — Retry';
+      btn.disabled = false;
+      btn.style.color = 'var(--red)';
+    }
+  }).catch(function() {
+    btn.innerHTML = 'Offline — Deployed Locally';
+    btn.style.background = 'rgba(72,187,120,0.08)';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+    btn.style.animation = 'none';
+    document.getElementById('deploy-form').querySelectorAll('input,textarea,select').forEach(function(el) { el.disabled = true; });
+    setTimeout(function() { window.location.href = 'dashboard.html?deployed=true'; }, 800);
+  });
   return false;
 }
 

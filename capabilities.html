@@ -1477,6 +1477,28 @@ The F-35 Titanium Casting (PN 47821-B) is the highest-urgency item: its qualific
 </div>
 <div class="notification-container" id="notification-container"></div>
 
+<!-- Demo Modal — shown when ?demo=true -->
+<div class="modal-overlay" id="modal-demo">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header-section"><h3>Morningstar Capabilities Demo</h3><button class="modal-close" onclick="closeModal('modal-demo')">✕</button></div>
+    <div class="modal-body-section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="padding:10px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--cyan);margin-bottom:4px">&#9679; Causal Risk Engine</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-2)">Bayesian Monte Carlo simulation with Bellman-Ford propagation across 28+ node supply graph</div></div>
+        <div style="padding:10px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--cyan);margin-bottom:4px">&#9679; Macro Intelligence</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-2)">Live FRED commodities, EIA energy pulse, CBP border wait times, and VesselFinder port congestion</div></div>
+        <div style="padding:10px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--cyan);margin-bottom:4px">&#9679; NLQ + RAG Pipeline</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-2)">Natural language query engine with local TF-IDF vector store and multi-provider LLM fallback chain</div></div>
+        <div style="padding:10px;background:rgba(103,232,249,0.04);border:1px solid rgba(103,232,249,0.1);border-radius:4px"><div style="font-family:'Space Grotesk',sans-serif;font-size:0.55rem;font-weight:600;color:var(--cyan);margin-bottom:4px">&#9679; Data Reconciliation</div><div style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--text-2)">Levenshtein fuzzy matching, entity resolution, and cross-reference ETL from 6 mock feed generators</div></div>
+      </div>
+      <div style="padding:10px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.1);border-radius:4px;margin-bottom:8px">
+        <div style="font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--green)">&#9679; All systems operational — running on local backend (port 3456) with free BazaarLink LLM</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <a href="dashboard.html" class="btn-ghost" style="font-size:0.65rem;padding:8px 18px;text-decoration:none">Open Command Center</a>
+        <button class="btn-ghost" onclick="closeModal('modal-demo')" style="font-size:0.65rem;padding:8px 18px">Continue Browsing</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="capabilities.js"></script>
 <script>function closeModal(id){var el=document.getElementById(id);if(!el)return;el.classList.remove('visible');if(id==='inventory-overlay')el.style.display='none';}function notify(msg,type){var c=document.getElementById('notification-container');if(!c)return;var e=document.createElement('div');e.className='notification'+(type?' '+type:'');e.textContent=msg;c.appendChild(e);setTimeout(function(){if(e.parentNode)e.parentNode.removeChild(e)},3500);}function updateNavClock(){var d=new Date();var h=String(d.getUTCHours()).padStart(2,'0');var m=String(d.getUTCMinutes()).padStart(2,'0');var s=String(d.getUTCSeconds()).padStart(2,'0');var el=document.getElementById('nav-clock');if(el)el.textContent=h+':'+m+':'+s+'Z'}updateNavClock();setInterval(updateNavClock,1000);
 
@@ -1746,6 +1768,15 @@ function handleMacroWsUpdate(data){
 
 // Initialize macro data on load
 setTimeout(refreshMacroData,2000);
+
+/* ===== Demo mode — auto-open when ?demo=true ===== */
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  if(params.get('demo')==='true'){
+    var modal=document.getElementById('modal-demo');
+    if(modal)setTimeout(function(){modal.classList.add('visible');},600);
+  }
+})();
 </script>
 </body>
 </html>
